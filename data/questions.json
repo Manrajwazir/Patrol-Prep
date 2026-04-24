@@ -1,0 +1,454 @@
+{
+    "questions": [
+        {
+            "id": "q-001",
+            "topic": "use_of_force",
+            "difficulty": "intermediate",
+            "question": "Under Section 25 of the Criminal Code, when is a security professional justified in using force?",
+            "options": [
+                "Whenever the security professional believes a crime is being committed",
+                "When acting on reasonable grounds and using only as much force as is necessary",
+                "When the employer has authorized the use of force in writing",
+                "When protecting any private property regardless of circumstances"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 17",
+            "manualExcerpt": "Every one who is required or authorized by law to do anything in the administration or enforcement of the law... is, if he acts on reasonable grounds, justified in doing what he is required or authorized to do and in using as much force as is necessary for that purpose."
+        },
+        {
+            "id": "q-002",
+            "topic": "use_of_force",
+            "difficulty": "intermediate",
+            "question": "What is the most important rule about use of force for a security professional?",
+            "options": [
+                "Always be the first to act when a situation arises",
+                "Use as much force as the subject is using against you",
+                "Avoid the use of force as much as possible",
+                "Use force only when directed by your supervisor"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 17",
+            "manualExcerpt": "The most important rule about the use of force in your role as a security professional is to avoid it as much as possible."
+        },
+        {
+            "id": "q-003",
+            "topic": "use_of_force",
+            "difficulty": "advanced",
+            "question": "Under Section 26 of the Criminal Code, what happens if a security professional uses excessive force?",
+            "options": [
+                "They are protected from liability if they acted in good faith",
+                "They are criminally responsible for any excess force used",
+                "They face only civil penalties, not criminal charges",
+                "Their employer is held responsible, not the individual"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 19",
+            "manualExcerpt": "Every one who is authorized by law to use force is criminally responsible for any excess thereof according to the nature and quality of the act that constitutes the excess."
+        },
+        {
+            "id": "q-004",
+            "topic": "use_of_force",
+            "difficulty": "intermediate",
+            "question": "When determining if force was 'reasonable,' which factors should be considered?",
+            "options": [
+                "The amount of money the security guard is paid",
+                "The physical and mental characteristics of the subject and the situation",
+                "The opinion of the security guard's supervisor only",
+                "Whether the suspect was eventually convicted"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 19",
+            "manualExcerpt": "'Reasonable force' is determined by the situation in which it is to be applied. The amount of force used must be consistent with the physical and mental characteristics of the subject, and must be appropriate to the situation at hand."
+        },
+        {
+            "id": "q-005",
+            "topic": "use_of_force",
+            "difficulty": "advanced",
+            "question": "When may a security professional use force that is intended or likely to cause death or grievous bodily harm?",
+            "options": [
+                "When apprehending any fleeing suspect",
+                "When ordered to by their employer",
+                "Only when believed on reasonable grounds to be necessary for self-preservation or preserving someone under their protection from death or grievous bodily harm",
+                "Whenever a weapon is present at the scene"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 18",
+            "manualExcerpt": "A person is not justified... in using force that is intended or is likely to cause death or grievous bodily harm unless the person believes on reasonable grounds that it is necessary for the self-preservation of the person or the preservation of any one under that person's protection from death or grievous bodily harm."
+        },
+        {
+            "id": "q-006",
+            "topic": "lawful_detention",
+            "difficulty": "intermediate",
+            "question": "Under Section 494(1)(a) of the Criminal Code, when can a security professional arrest someone without a warrant?",
+            "options": [
+                "When they suspect the person looks suspicious",
+                "When they personally find the person committing an indictable offence",
+                "When another person tells them a crime occurred",
+                "When the person has a criminal record"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 4-6",
+            "manualExcerpt": "Any one may arrest without warrant a person whom he finds committing an indictable offence. To 'find someone committing an indictable offence' means you must catch them in the act."
+        },
+        {
+            "id": "q-007",
+            "topic": "lawful_detention",
+            "difficulty": "intermediate",
+            "question": "After making a citizen's arrest under Section 494, what is the security professional's legal obligation?",
+            "options": [
+                "Question the arrested person to obtain a confession",
+                "Hold the person until the next business day",
+                "Forthwith deliver the arrested person to a peace officer",
+                "Take the person to their employer's office for processing"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 7",
+            "manualExcerpt": "Any one other than a peace officer who arrests a person without warrant shall forthwith deliver the person to a peace officer."
+        },
+        {
+            "id": "q-008",
+            "topic": "lawful_detention",
+            "difficulty": "advanced",
+            "question": "A customer at the mall tells you they think they saw someone shoplifting in another store. You did not witness this yourself. Can you arrest the suspect under Section 494?",
+            "options": [
+                "Yes, the customer's witness account is sufficient grounds",
+                "Yes, but only if the suspect is still in the mall",
+                "No, you may not make a citizen's arrest where you personally did not witness the offence",
+                "Yes, but you must first call your supervisor for permission"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 7",
+            "manualExcerpt": "You may not make citizen arrests where you personally did not witness the offence. As you did not see the offence being committed, section 494 does not permit you to make an arrest."
+        },
+        {
+            "id": "q-009",
+            "topic": "lawful_detention",
+            "difficulty": "intermediate",
+            "question": "What does 'reasonable grounds' mean in the context of an arrest?",
+            "options": [
+                "A personal hunch that something illegal is happening",
+                "Facts and information that would lead the average person to conclude a criminal act has occurred",
+                "An order from your supervisor to detain someone",
+                "Any suspicion that lasts more than five minutes"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 6",
+            "manualExcerpt": "Reasonable grounds describe an instance where the facts and information available in a given situation would lead the average person to conclude a criminal act has occurred."
+        },
+        {
+            "id": "q-010",
+            "topic": "lawful_detention",
+            "difficulty": "advanced",
+            "question": "Under Section 494(2)(b), an owner or property agent may arrest someone after a reasonable amount of time has passed since the offence. What additional condition must be met?",
+            "options": [
+                "The suspect must confess to the original offence",
+                "It must not be feasible in the circumstances for a peace officer to make the arrest",
+                "The original offence must have been on video",
+                "The arrest must be approved by the property owner directly"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 7",
+            "manualExcerpt": "They make the arrest within a reasonable time after the offence is committed and they believe on reasonable grounds that it is not feasible in the circumstances for a peace officer to make the arrest."
+        },
+        {
+            "id": "q-011",
+            "topic": "charter_rights",
+            "difficulty": "intermediate",
+            "question": "Section 9 of the Canadian Charter of Rights and Freedoms protects everyone from what?",
+            "options": [
+                "Unreasonable search and seizure",
+                "Self-incrimination during testimony",
+                "Being arbitrarily detained or imprisoned",
+                "Cruel and unusual punishment"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 2",
+            "manualExcerpt": "Section 9: Everyone has the right not to be arbitrarily detained or imprisoned."
+        },
+        {
+            "id": "q-012",
+            "topic": "charter_rights",
+            "difficulty": "intermediate",
+            "question": "Upon arrest or detention, what right is a person guaranteed under Section 10 of the Charter?",
+            "options": [
+                "The right to a free meal during questioning",
+                "The right to be informed promptly of the reasons and to retain and instruct counsel without delay",
+                "The right to leave the premises if not formally charged within an hour",
+                "The right to refuse identification"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 2",
+            "manualExcerpt": "Section 10: Everyone has the right on arrest or detention to be informed promptly of the reasons therefor; to retain and instruct counsel without delay and to be informed of that right."
+        },
+        {
+            "id": "q-013",
+            "topic": "charter_rights",
+            "difficulty": "intermediate",
+            "question": "Section 8 of the Charter protects everyone against what?",
+            "options": [
+                "Discrimination based on race or religion",
+                "Unreasonable search or seizure",
+                "Being held without trial",
+                "Being deported without due process"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Two, Page 2",
+            "manualExcerpt": "Section 8: Everyone has the right to be secure against unreasonable search or seizure."
+        },
+        {
+            "id": "q-014",
+            "topic": "charter_rights",
+            "difficulty": "advanced",
+            "question": "How should a security professional understand the Charter's role in their work?",
+            "options": [
+                "It limits their ability to do their job effectively",
+                "It only applies to police officers, not security guards",
+                "It serves as a protection — by acting within permissible behaviour, they limit their vulnerability to legal action",
+                "It can be ignored if the suspect is clearly guilty"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 4",
+            "manualExcerpt": "You should not view this as a limitation on your ability to do your job as a security professional, but rather, it is a protection. By familiarizing yourself with what is permissible behaviour... you limit your vulnerability to legal action and civil suits."
+        },
+        {
+            "id": "q-015",
+            "topic": "charter_rights",
+            "difficulty": "intermediate",
+            "question": "What rights and powers does a licensed security professional have compared to a regular citizen?",
+            "options": [
+                "Greater powers of arrest than a regular citizen",
+                "The same legal authority as a peace officer",
+                "No more or no fewer rights than any other citizen",
+                "Authority to conduct searches without permission"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Two, Page 17",
+            "manualExcerpt": "It cannot be stated often enough: as a security professional, you have no more or no fewer rights than any other citizen."
+        },
+        {
+            "id": "q-016",
+            "topic": "note_taking_reporting",
+            "difficulty": "basic",
+            "question": "What writing instrument should be used when making notebook entries?",
+            "options": [
+                "Pencil, so corrections can be made cleanly",
+                "Pen, never pencil",
+                "Either pen or pencil, depending on preference",
+                "A digital stylus on a tablet"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Five, Page 3",
+            "manualExcerpt": "When you write in your notebook use a pen, not a pencil, and make sure your writing is legible."
+        },
+        {
+            "id": "q-017",
+            "topic": "note_taking_reporting",
+            "difficulty": "intermediate",
+            "question": "Notebook entries should capture which key categories of information about an incident?",
+            "options": [
+                "Only the names of those involved and the time",
+                "Who, What, Where, When, Why, and How",
+                "A detailed personal opinion of what happened",
+                "Just the final outcome of the situation"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Five, Page 3",
+            "manualExcerpt": "Writing in your notebook is similar to the way reporters create a news story; you should be including the details about WHO, WHAT, WHERE, WHEN, WHY and HOW?"
+        },
+        {
+            "id": "q-018",
+            "topic": "note_taking_reporting",
+            "difficulty": "intermediate",
+            "question": "If you do not know why an incident occurred and witnesses cannot explain it, what should you record in your notebook?",
+            "options": [
+                "Your best guess based on experience",
+                "A reasonable assumption supported by your training",
+                "Nothing — do not assume you know why something happened",
+                "A theory that fits the available evidence"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Five, Page 4",
+            "manualExcerpt": "Do not assume you know why something happened. If you do not know and the witness information cannot explain, write nothing."
+        },
+        {
+            "id": "q-019",
+            "topic": "note_taking_reporting",
+            "difficulty": "advanced",
+            "question": "Why must notebook entries be accurate, complete, and uncompromised?",
+            "options": [
+                "Because supervisors review them weekly",
+                "Because the notes may eventually be used in court as evidence",
+                "Because they affect the security guard's performance review",
+                "Because clients request copies of all notes"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Five, Page 3",
+            "manualExcerpt": "The notes you write may eventually be used in court. You must ensure your notes are accurate, complete, and uncompromised."
+        },
+        {
+            "id": "q-020",
+            "topic": "note_taking_reporting",
+            "difficulty": "intermediate",
+            "question": "When should a security professional write notes about an incident in their notebook?",
+            "options": [
+                "At the end of each week as part of a summary",
+                "At the time the events occur, as memory may fade later",
+                "Only when their supervisor asks for a report",
+                "Only after they have discussed it with witnesses"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Five, Page 3",
+            "manualExcerpt": "A notebook allows you to record events and related information at the time they occur and your notes will be available in the future where your memory may fade."
+        },
+        {
+            "id": "q-021",
+            "topic": "patrol_procedures",
+            "difficulty": "intermediate",
+            "question": "Why is foot patrol often more appropriate than vehicle patrol for many security settings?",
+            "options": [
+                "Foot patrol is required by Alberta law for all sites",
+                "Foot patrol allows the use of all senses and access to secluded areas",
+                "Foot patrol is faster than driving in any setting",
+                "Vehicle patrol is too expensive for most clients"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Three, Page 13",
+            "manualExcerpt": "Conducting your patrol on foot allows you to use all of your senses, and makes it easier for you to stay close to the persons or property you are tasked with protecting. When on foot, you are able to access secluded areas, such as stairwells."
+        },
+        {
+            "id": "q-022",
+            "topic": "patrol_procedures",
+            "difficulty": "intermediate",
+            "question": "What is the danger of becoming complacent during patrol duties?",
+            "options": [
+                "It makes shifts feel longer",
+                "Making assumptions based on prior experience can cause you to miss real signs of trouble",
+                "It causes muscle fatigue from repetitive routes",
+                "It violates Alberta's Security Services Act"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Three, Page 13",
+            "manualExcerpt": "Being complacent means you make a lot of assumptions based on prior experience, such as 'everything looks pretty much the same as last time, so all is well,' or, 'the wind has blown that door open a bunch of times in the past, that's all it is tonight.'"
+        },
+        {
+            "id": "q-023",
+            "topic": "patrol_procedures",
+            "difficulty": "basic",
+            "question": "Why should a security guard avoid using a portable music device (MP3 player or earbuds) while on patrol?",
+            "options": [
+                "It violates the dress code for licensed guards",
+                "It interferes with the sense of hearing, particularly at night",
+                "It drains the device's battery too quickly",
+                "Music is distracting to other people on site"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Three, Page 14",
+            "manualExcerpt": "Do not use a portable stereo system (e.g., MP3 player) while on duty; it will interfere with your sense of hearing, particularly at night or in dimly lit areas."
+        },
+        {
+            "id": "q-024",
+            "topic": "patrol_procedures",
+            "difficulty": "intermediate",
+            "question": "When approaching an unknown situation at night near windows or doors, what positioning consideration is important?",
+            "options": [
+                "Stand directly in the doorway to appear more authoritative",
+                "Position yourself so you do not create a silhouette that makes you readily visible",
+                "Always shine your flashlight directly at the door",
+                "Stand as far away as possible while still observing"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Three, Page 14",
+            "manualExcerpt": "When approaching an unknown situation at night, consider your stance with respect to the light; try not to create a silhouette of yourself, as it will make you readily visible. This is especially true near windows and doors."
+        },
+        {
+            "id": "q-025",
+            "topic": "patrol_procedures",
+            "difficulty": "basic",
+            "question": "Before starting a shift, which of the following should a security professional check?",
+            "options": [
+                "Only their uniform appearance",
+                "Their physical wellness, uniform, equipment (including notebook, pen, radio), and post orders",
+                "Only their radio batteries",
+                "Only the post orders for the day"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Three, Page 12",
+            "manualExcerpt": "Take stock of the following prior to starting your shift: Are you feeling well? Uniform and duty belt? Keys, notebook, pen, radio, or phone – have them ready. If you have a radio, test to ensure it is working. Post orders – review, discuss with supervisor if required."
+        },
+        {
+            "id": "q-026",
+            "topic": "emergency_response",
+            "difficulty": "intermediate",
+            "question": "If you discover a fire has started, what is the correct order of immediate actions?",
+            "options": [
+                "Try to put it out yourself first, then alert others if you fail",
+                "Activate the fire alarm, clear all persons from the building, then close doors and windows to contain the fire",
+                "Call your supervisor first to ask for instructions",
+                "Wait for the fire department to arrive before doing anything"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Six, Page 10",
+            "manualExcerpt": "If you discover a fire has started, you should immediately activate the fire alarm. Check the area for occupants and clear all persons from the building immediately. Closing doors and windows will help keep the fire from spreading to other areas."
+        },
+        {
+            "id": "q-027",
+            "topic": "emergency_response",
+            "difficulty": "advanced",
+            "question": "What does the PASS method refer to when using a fire extinguisher?",
+            "options": [
+                "Prepare, Activate, Stand back, Spray",
+                "Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep side to side",
+                "Position, Assess, Spray, Secure",
+                "Protect, Aim, Start, Stop"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Six, Page 11",
+            "manualExcerpt": "To use a fire extinguisher, follow the PASS method. PULL the pin on the extinguisher. AIM the nozzle at the base of the fire. SQUEEZE or press the handle. SWEEP the nozzle from side to side, spraying the contents at the fire."
+        },
+        {
+            "id": "q-028",
+            "topic": "emergency_response",
+            "difficulty": "advanced",
+            "question": "Why must you use a fire extinguisher rated for the specific type of fire you are dealing with?",
+            "options": [
+                "Using the wrong type voids the warranty on the extinguisher",
+                "Using the wrong type is illegal under Alberta fire code",
+                "An extinguisher not rated for the fire type will not be effective and may make things worse",
+                "All extinguishers work on all fires; the rating is only a recommendation"
+            ],
+            "correctAnswer": 2,
+            "manualReference": "Module Six, Page 11",
+            "manualExcerpt": "You must use a fire extinguisher which is rated for the type of fire you are dealing with in order to be effective in your efforts. A class BC-rated fire extinguisher will NOT put out a class A fire; you must use an A-rated extinguisher."
+        },
+        {
+            "id": "q-029",
+            "topic": "emergency_response",
+            "difficulty": "intermediate",
+            "question": "When should a security professional attempt to put out a fire themselves rather than evacuate?",
+            "options": [
+                "Whenever they see a fire, regardless of size",
+                "Only when the fire is very small, appropriate equipment is available, no dangerous chemicals are present, and an escape route exists",
+                "When the fire department is more than 10 minutes away",
+                "Only if the building owner specifically requests it"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Six, Page 10",
+            "manualExcerpt": "Your decision to try putting out the fire on your own should be based upon: The size of the fire – only attempt to put out a very small fire on your own. The availability of appropriate equipment for putting out the fire and your training to use such equipment. The presence of dangerous chemicals – do NOT stay in a room where fire and chemicals coexist. The presence of an escape if you are unsuccessful in trying to extinguish the blaze."
+        },
+        {
+            "id": "q-030",
+            "topic": "emergency_response",
+            "difficulty": "intermediate",
+            "question": "How should a security professional treat a bomb threat received by phone?",
+            "options": [
+                "Hang up immediately and call the police",
+                "Treat every bomb threat as a real and very serious situation, listen, remain calm, gather as much information as possible, and notify supervisor or police",
+                "Ignore it if it sounds like a hoax",
+                "Try to argue with the caller to determine if they are serious"
+            ],
+            "correctAnswer": 1,
+            "manualReference": "Module Six, Page 12-13",
+            "manualExcerpt": "Since you will not know how genuine the threat is when it is received, you must treat every bomb threat as a real and very serious situation. Guidelines for dealing with a caller making a bomb threat: Listen, Remain calm, be polite, Do not interrupt the caller, Obtain as much information as possible, notify your partner or supervisor of the call and request the police be called."
+        }
+    ]
+}
