@@ -1,33 +1,57 @@
-# PatrolPrep — Project Context & Build Plan
+# PatrolPrep — Project Context
 
 > **Hackathon:** DevCon Edmonton (Edmonton Unlimited) — April 25, 2026
-> **Hours of building:** 9:15 AM – 3:00 PM (~5h 45min build, then submission + pitches)
-> **Team size:** 5 (Manraj, Julien, Cristian, Oscar, Ali)
-> **Theme:** AI study tool for Alberta Basic Security Training students with limited English
+> **Hours:** 9:15 AM – 3:00 PM build · 4:30 PM final pitch
+> **Team:** 5 (Manraj, Julien, Cristian, Oscar, Ali — Manraj leading + likely doing most)
 > **Goal:** Win. Score 14+ on the 16-point rubric.
 
 ---
 
-## 0. The TL;DR (read first, then everything else)
+## 0. The TL;DR
 
-**What we're building:** An adaptive practice exam for the Alberta Basic Security Training license. When a student gets a question wrong, instead of just showing the right answer, our app uses Bedrock to explain the **cultural and legal context** in the student's native language — then generates 3 more drill questions on that concept. It's not a translator. It's a concept bridge.
+**What we're building:** An adaptive practice exam for the Alberta Basic Security Training license. When a student gets a question wrong, instead of just showing the right answer, our app uses Bedrock to explain the **cultural and legal context** in the student's native language — then generates 3 more drill questions on that concept. Plus voice questions: speak in any language, get a spoken answer back.
 
-**One-line pitch:** *"Other study tools translate the words. We translate the concepts. When a student fails 'reasonable grounds for detention,' we explain how Canadian legal reasoning works compared to their home country's, in their language, then drill them until it sticks."*
+**One-line pitch:** *"Other study tools translate the words. We translate the concepts. When a student fails 'reasonable grounds for detention,' we explain how Canadian legal reasoning works compared to their home country's — in their language — then drill them until it sticks."*
 
 **Why it wins:**
-1. Hits all 4 rubric categories meaningfully (most teams will hit 2-3 well)
+1. Hits all 4 rubric categories meaningfully (most teams will hit 2-3)
 2. Differentiated from the 5+ teams building "ChatGPT on top of the PDF"
-3. Buildable in 6 hours on top of our existing AWS template
+3. Buildable on top of our already-deployed AWS infrastructure
 4. Demo is 90 seconds and visually compelling
-5. Real impact story — the actual reason students fail isn't language, it's culture/legal context
+5. Real impact story — the actual reason students fail isn't language, it's cultural-legal context
 
 ---
 
-## 1. The Problem (use this in the pitch)
+## 1. Current State (where we are right now)
 
-Alberta requires anyone working as a licensed security guard to complete Basic Security Training and pass a provincial proficiency exam. The course material is **only available in English**. Many of Alberta's 20,000+ security guards are newcomers to Canada — Filipino, South Asian, Latin American, and East African communities are heavily represented in the industry.
+**Infrastructure already done and live:**
+- AWS workshop account credentials configured as `hackathon` profile
+- CDK stack `PatrolprepStack` deployed to **us-west-2** in the workshop AWS account
+- 3 S3 buckets created (audio, photo, report)
+- DynamoDB table `IncidentsTable` (will be reused)
+- 4 Lambda stubs (`upload`, `process`, `list`, `get`) — currently returning placeholder data
+- API Gateway live, returning `{"incidents":[],"stub":true}` from `/incidents`
+- Frontend skeleton: Next.js + Tailwind + shadcn + IBM Plex fonts + dark theme + blue accent (#3B82F6)
+- Smoke test working: localhost frontend successfully calls deployed API
 
-The naive theory: students fail because their English is weak. So translate the manual, problem solved.
+**Still to do (rest of tonight + tomorrow morning):**
+- Generate 30-question bank from manual
+- Validate Bedrock prompts in 3 languages
+- Implement explain Lambda with real Bedrock call
+- Build question UI
+- Build wrong-answer flow
+- Add drill mode
+- Add voice (Transcribe + Polly)
+- Add multilingual support
+- Polish + pitch
+
+---
+
+## 2. The Problem (use this in the pitch)
+
+Alberta requires anyone working as a licensed security guard to complete Basic Security Training and pass a provincial proficiency exam. The course material is **only available in English**. Many of Alberta's 20,000+ security guards are newcomers to Canada — Filipino, South Asian, Latin American, and East African communities are heavily represented.
+
+The naive theory: students fail because their English is weak. Translate the manual, problem solved.
 
 **The real problem:** A Filipino student who's been speaking English for 10 years still fails the exam. Why? Because the exam tests **Canadian legal concepts** — "indictable offense," "Section 25 of the Criminal Code," "reasonable grounds," "use of force continuum," "Charter rights" — that don't have direct equivalents in their home country's legal system.
 
@@ -39,102 +63,98 @@ That's the gap PatrolPrep fills. We don't translate. We explain.
 
 ---
 
-## 2. The Product
+## 3. The Product
 
-### 2.1 User personas
+### 3.1 User personas
 
 **Primary — Maria, 28, Filipina student**
-- Took Basic Security Training course at NorQuest College, finishing tomorrow
+- Took Basic Security Training course at NorQuest, finishing tomorrow
 - Speaks fluent conversational English, reads slowly
 - Failed the practice exam twice, license depends on passing
 - Studies during evening commute on transit
-- Has Android phone
 
 **Secondary — Amrit, 35, Punjabi student**
 - New to Canada (8 months), enrolled in private security training school
 - Working as a part-time guard already on a temporary clearance
-- Native Punjabi speaker, English is third language after Hindi
-- Studies on lunch breaks
+- Native Punjabi speaker, English is third language
 
-### 2.2 Core user flow
+### 3.2 Core user flow
 
 ```
 [Open app]
     ↓
 [Choose your language: English / Español / Tagalog / Punjabi]
     ↓
-[Topic select OR "Random Practice Test"]
+[Tap "Start Practice Exam"]
     ↓
 [Question appears in English (because the real exam is in English)]
     ↓
 [Multiple choice: 4 options]
     ↓
-[User selects an answer]
+[User selects → Submit]
     │
     ├── CORRECT
-    │   └── ✓ Brief encouragement + next question
+    │   └── ✓ Brief check, "Next Question"
     │
     └── WRONG
-        ├── Show correct answer in English
-        ├── ▶ "Explain in [their language]" button (or auto-play)
-        ├── Bedrock generates contextual explanation:
+        ├── Wrong option turns red, correct turns green
+        ├── Panel slides up from bottom
+        ├── Bedrock-generated explanation in user's language:
         │     - WHY this is the right answer
-        │     - The cultural/legal context behind it
-        │     - Comparison to user's home country's framing (if relevant)
-        ├── "Drill this concept" → 3 generated similar questions
-        └── Next question
+        │     - The cultural/legal context
+        │     - Comparison to user's home country's framing
+        ├── (Optional) Polly speaks the explanation
+        ├── "Drill this concept" button → 3 generated similar questions
+        └── "Continue" → next question
 
-[Session ends after 10 questions]
-    ↓
-[Score + weak topics + suggestion: "Drill: Use of Force"]
+[After 10 questions] → Results screen with score + weak topics
 ```
 
-### 2.3 The voice feature
+### 3.3 Voice feature
 
-At any point during a question:
-- Tap mic → "Can you explain what 'lawful detention' means?"
-- Whisper transcribes (in any language)
-- Bedrock answers in the user's selected language using the manual as context
+Floating mic button on every question screen:
+- Tap → modal opens with record button
+- User asks any question in any language ("What's the difference between an indictable and summary offense?")
+- Transcribe converts speech to text
+- Bedrock answers in chosen language using manual as context
 - Polly speaks the answer aloud
 - Returns to the question
 
-This is the wow moment in the demo. Don't over-engineer it; one mic button on every screen.
+The wow moment in the demo. One mic button, one modal, that's it.
 
-### 2.4 Feature scope
+### 3.4 Feature scope
 
 **MUST HAVE (P0) — without these we have no demo:**
-- [ ] Practice exam mode: 10 questions from a question bank
-- [ ] Question bank: 30+ realistic questions sourced from the participant manual
-- [ ] Wrong-answer flow with Bedrock-generated contextual explanation in user's language
-- [ ] Language selection: English, Spanish, Tagalog, Punjabi
-- [ ] "Drill this concept" → 3 similar generated questions
-- [ ] Session results screen with score and weak topics
+- [ ] Practice exam: 10 questions from question bank
+- [ ] Question bank: 30 realistic questions from the manual
+- [ ] Wrong-answer flow: contextual explanation in user's language
+- [ ] Language selector: English, Spanish, Tagalog, Punjabi
+- [ ] "Drill this concept" → 3 generated similar questions
+- [ ] Results screen with score + weak topics
 
 **SHOULD HAVE (P1) — if on track by 1 PM:**
 - [ ] Voice input for asking questions
 - [ ] Polly text-to-speech for explanations
-- [ ] Topic selection (don't just do random)
-- [ ] Progress tracking across sessions
+- [ ] Streaming text output (typewriter effect)
+- [ ] Demo mode flag (`?demo=1`) for cached responses
 
 **NICE TO HAVE (P2) — only if ahead at 2 PM:**
 - [ ] Bookmarking questions
-- [ ] Comparing your home country's law (more elaborate)
-- [ ] Audio playback of the manual sections
+- [ ] Topic-specific practice mode
 - [ ] PWA installable
 
 **OUT OF SCOPE — do not build:**
-- ❌ User accounts / authentication (everyone is a guest user)
+- ❌ Authentication / user accounts (everyone is a guest)
 - ❌ Multi-tenant orgs / instructor view
 - ❌ Live group features
 - ❌ Native iOS/Android apps
 - ❌ Admin dashboards
-- ❌ Native PDF rendering
 
 ---
 
-## 3. Technical Architecture
+## 4. Technical Architecture
 
-### 3.1 High-level diagram
+### 4.1 High-level diagram
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -143,25 +163,25 @@ This is the wow moment in the demo. Don't over-engineer it; one mic button on ev
 │  - Question UI                                                │
 │  - Language selector                                          │
 │  - Mic button (Web MediaRecorder API)                         │
+│         Hosted on AWS Amplify                                 │
 └───────────────┬──────────────────────────────────────────────┘
                 │ HTTPS / fetch
                 ▼
 ┌──────────────────────────────────────────────────────────────┐
-│         AMAZON API GATEWAY (REST, ca-central-1)               │
-│  POST /question/explain  (wrong answer → contextual reason)   │
-│  POST /question/drill    (generate 3 similar questions)       │
-│  POST /question/ask      (free-form voice/text question)      │
-│  GET  /questions/random  (fetch a question from the bank)     │
-│  POST /audio/transcribe  (speech to text via Transcribe)      │
-│  POST /audio/speak       (text to speech via Polly)           │
+│         AMAZON API GATEWAY (REST, us-west-2)                  │
+│  POST /explain          (wrong answer → contextual reason)    │
+│  POST /drill            (generate 3 similar questions)        │
+│  POST /ask              (free-form voice/text question)       │
+│  POST /transcribe       (speech to text via Transcribe)       │
+│  POST /speak            (text to speech via Polly)            │
 └───────────────┬──────────────────────────────────────────────┘
                 │
     ┌───────────┼─────────────┬─────────────┬────────────┐
     ▼           ▼             ▼             ▼            ▼
 ┌─────────┐ ┌─────────┐ ┌─────────────┐ ┌─────────┐ ┌───────────┐
-│ Lambda  │ │ DynamoDB│ │   Bedrock    │ │  Polly  │ │Transcribe │
-│ (5 fns) │ │(question│ │(Claude 3.5) │ │  (TTS)  │ │  (STT)    │
-│         │ │  bank)  │ │              │ │         │ │           │
+│ Lambdas │ │ DynamoDB│ │   Bedrock    │ │  Polly  │ │Transcribe │
+│         │ │ (sessions│ │(Sonnet 3.5) │ │  (TTS)  │ │  (STT)    │
+│         │ │ if time) │ │              │ │         │ │           │
 └─────────┘ └─────────┘ └─────────────┘ └─────────┘ └───────────┘
                               ▲
                               │ retrieves manual context
@@ -169,27 +189,39 @@ This is the wow moment in the demo. Don't over-engineer it; one mic button on ev
                     ┌─────────────────┐
                     │       S3         │
                     │  Manual PDF      │
-                    │  (chunked text)  │
+                    │  questions.json  │
                     └─────────────────┘
 ```
 
-### 3.2 AWS services and why each one earns its place
+### 4.2 AWS services used
 
 | Service | Purpose | Pitch reason |
 |---|---|---|
-| **Bedrock (Claude 3.5 Sonnet)** | Generates contextual explanations + drill questions in any language | The brain |
-| **Amazon Transcribe** | Speech-to-text for voice input, all 4 languages | Multi-lingual mic |
+| **Bedrock (Claude Sonnet 3.5)** | Generates contextual explanations + drill questions in any language | The brain |
+| **Amazon Transcribe** | Speech-to-text for voice input | Multi-lingual mic |
 | **Amazon Polly** | Text-to-speech for explanations in user's language | Voice answers, accessibility |
-| **S3** | Stores chunked manual content + audio | Manual is the source of truth |
-| **DynamoDB** | Question bank, session history (if time) | Fast lookups |
-| **Lambda + API Gateway** | Serverless backend | Scalable, cheap, AWS-native |
+| **S3** | Stores manual PDF + question bank JSON | Manual is source of truth |
+| **DynamoDB** | Session history (P2 only) | Fast lookups |
+| **Lambda + API Gateway** | Serverless backend | Scalable, AWS-native |
 | **Amplify Hosting** | Hosts the Next.js frontend | Same AWS account, single deploy |
 
-That's **7 AWS services**. Pitch as 6.
+**7 AWS services. Pitch as 6.**
 
-### 3.3 The question bank
+### 4.3 Region
 
-Store as a JSON in S3 OR seed into DynamoDB. Either works. JSON in S3 is simpler.
+All resources in **us-west-2** (Oregon) — the workshop account's region. Bedrock model ID uses `us.` prefix:
+
+```
+us.anthropic.claude-sonnet-4-5-20250929-v1:0
+```
+
+(Verify exact ID in their console under Bedrock → Cross-region inference.)
+
+**Note:** We're in us-west-2 not ca-central-1 because the workshop account requires it. Our pitch can still emphasize "AWS-native, deployed on AWS infrastructure with serverless scaling." Don't make data residency a centerpiece since we're not in Canada.
+
+### 4.4 The question bank
+
+JSON file in S3 OR bundled with the frontend:
 
 ```json
 {
@@ -213,19 +245,17 @@ Store as a JSON in S3 OR seed into DynamoDB. Either works. JSON in S3 is simpler
 }
 ```
 
-Aim for **30 questions** across 6 topics:
-- Use of Force
-- Lawful Detention
-- Charter Rights
-- Note-Taking and Reports
-- Patrol Procedures
-- Emergency Response
+**30 questions across 6 topics, 5 each:**
+1. Use of Force
+2. Lawful Detention and Citizen's Arrest
+3. Charter Rights and Freedoms
+4. Note-Taking and Incident Reporting
+5. Patrol Procedures and Site Security
+6. Emergency Response and First Aid
 
-Ali generates these from the manual using Claude on his laptop tonight.
+### 4.5 The Bedrock prompts
 
-### 3.4 The Bedrock prompts (Oscar owns these)
-
-**PROMPT 1 — Contextual Explanation**
+**PROMPT 1 — Contextual Explanation** (the most important one)
 
 ```
 SYSTEM:
@@ -242,7 +272,7 @@ When a student gets a question wrong, you must:
 
 Respond in the requested target language (Spanish/Tagalog/Punjabi/English).
 Match the language register to the student — clear, encouraging, not condescending.
-Keep total response under 150 words. No markdown.
+Keep total response under 150 words. No markdown, no preamble.
 
 USER:
 Question: {QUESTION}
@@ -300,35 +330,25 @@ Relevant manual section: {MANUAL_EXCERPT}
 Target language: {LANGUAGE}
 ```
 
-### 3.5 Region & data residency (pitch this)
-
-All resources in **`ca-central-1`** (Montreal). Bedrock via Cross-Region Inference Profile from ca-central-1 → data at rest stays in Canada. Speak this exact phrase in the pitch:
-
-> *"Everything is hosted in AWS Canada. Student data and audio recordings never leave Canadian soil — important because we're handling personal data of newcomers under Alberta's PIPA legislation."*
-
 ---
 
-## 4. Visual Design Direction
+## 5. Visual Design Direction
 
-### 4.1 The aesthetic
+### 5.1 Aesthetic
 
-PatrolPrep is **a serious learning tool, not a Duolingo clone.** Students are adults preparing for a license that will determine whether they can earn money. They want a tool that respects their intelligence and time.
+PatrolPrep is **a serious learning tool**, not a Duolingo clone. Students are adults preparing for a license that determines whether they can earn money. They want a tool that respects their intelligence and time.
 
 References:
-- **Khan Academy** — calm, focused, no gamification gimmicks
-- **Anki** — utilitarian, zero-distraction
-- **Linear** — restraint, precision
+- Khan Academy (calm, focused)
+- Anki (utilitarian, zero-distraction)
+- Linear (restraint, precision)
 
 NOT references:
-- ~~Duolingo~~ (too playful, owl mascots are infantilizing)
-- ~~Quizlet consumer~~ (too chaotic)
-- ~~Anything with confetti animations on correct answers~~
+- ~~Duolingo~~ (too playful, owl mascots)
+- ~~Quizlet consumer~~ (chaotic)
+- ~~Anything with confetti~~
 
-### 4.2 Color system (deviates slightly from GuardLog)
-
-Reuse the GuardLog dark-theme tokens **but switch the accent**:
-- GuardLog accent: hazard amber (industrial)
-- PatrolPrep accent: **`#3B82F6` (focused blue)** — concentration, learning, calm
+### 5.2 Color tokens (already in globals.css)
 
 ```css
 :root {
@@ -349,134 +369,82 @@ Reuse the GuardLog dark-theme tokens **but switch the accent**:
   --accent-glow:    59 130 246;
 
   /* Semantic */
-  --correct:        #4ADE80;   /* muted success green */
-  --incorrect:      #F87171;   /* soft alarm red, not aggressive */
-  --neutral:        #A8ACB4;
+  --correct:        #4ADE80;
+  --incorrect:      #F87171;
 }
 ```
 
-### 4.3 Typography
+### 5.3 Typography
 
-Same as GuardLog — IBM Plex Sans (body), IBM Plex Sans Condensed (display), IBM Plex Mono (timestamps, IDs).
+- **Body:** IBM Plex Sans (already loaded)
+- **Display:** IBM Plex Sans Condensed
+- **Monospace:** IBM Plex Mono (timestamps, IDs)
 
-For PatrolPrep specifically — questions render in **larger body type (17px)** with generous line-height (1.6). Reading comprehension is the entire point.
+Questions render at **17px with line-height 1.6** for reading comfort.
 
-### 4.4 Key UI elements
+### 5.4 Key UI elements
 
-**Question card (the hero element)**
-
+**Question card (the hero):**
 ```
 ┌──────────────────────────────────────────────────────────┐
-│ QUESTION 4 OF 10                              ●●●●○○○○○○ │ ← progress
+│ QUESTION 4 OF 10                              ●●●●○○○○○○ │
 │                                                            │
-│ Under Section 25 of the Criminal Code, a security         │ ← question 17px
-│ guard may use force only when:                             │   line-height 1.6
+│ Under Section 25 of the Criminal Code, a security         │
+│ guard may use force only when:                             │
 │                                                            │
 │  ○ A) They believe a crime is being committed             │
-│  ○ B) They have reasonable grounds and the force is       │ ← options
-│       no more than necessary                              │   16px, hover state
+│  ○ B) They have reasonable grounds and the force is       │
+│       no more than necessary                              │
 │  ○ C) They are protecting private property                │
 │  ○ D) Their employer has authorized it                    │
 │                                                            │
-│                                                            │
-│  [   Submit Answer   ]                          🎤         │ ← submit + mic
+│  [   Submit Answer   ]                          🎤         │
 └──────────────────────────────────────────────────────────┘
 ```
 
-**Wrong answer reveal**
+**Wrong answer reveal:**
+- Wrong option → red flash (`--incorrect`)
+- Correct option → green check (`--correct`)
+- Panel slides UP from bottom with: explanation in user's language, "Drill this concept" button, "Continue" button
+- If TTS enabled: explanation auto-plays via Polly
 
-When student gets it wrong, the wrong option turns red, the right option turns green, and a panel slides UP from the bottom of the screen with:
-- The correct answer recap
-- A globe icon + language indicator
-- The Bedrock-generated explanation (streamed if possible)
-- Two buttons: "Drill this concept" (primary) | "Continue" (secondary)
-
-If text-to-speech is enabled, the explanation auto-plays in the chosen language.
-
-**Language selector**
-
-Top-right corner, minimal. Just a globe icon that opens a tiny dropdown:
+**Language selector:** top-right corner, globe icon dropdown:
 - 🇨🇦 English
 - 🇪🇸 Español
 - 🇵🇭 Tagalog
 - 🇮🇳 ਪੰਜਾਬੀ (Punjabi)
 
-Saved to localStorage so it persists between visits.
+Saved to localStorage.
 
-**Mic button**
+**Mic button:** floating bottom-right, 64px circle, accent blue, pulses when recording.
 
-64px circle, accent blue. Floating bottom-right corner of every question screen. Pulses when recording. When tapped: opens a subtle modal with waveform + "Ask anything about this question" prompt. Cancel button always visible.
-
-### 4.5 Motion philosophy
-
-- Subtle. 200-280ms. `cubic-bezier(0.2, 0.8, 0.2, 1)`.
-- Wrong answer reveal: panel slides up over 320ms, options stagger color-shift over 200ms.
-- Correct answer: a single brief checkmark animation, no confetti, no celebration sound.
-- Streaming text appears character-by-character (typewriter) at ~30 chars/sec.
-
-### 4.6 Logo / wordmark
-
-Just the wordmark:
+### 5.5 Wordmark
 
 ```
 patrolprep.
 ```
-
-Lowercase, IBM Plex Sans Condensed 600, period in accent blue. Same construction as guardlog wordmark, different color.
-
----
-
-## 5. The Tech Stack
-
-### 5.1 Frontend
-- **Next.js 14 (App Router)** + TypeScript + Tailwind + shadcn/ui (already set up in template)
-- **Framer Motion** for transitions
-- Web MediaRecorder for mic input
-- localStorage for language preference + session state
-
-### 5.2 Backend
-- **AWS Lambda** (Node.js 20, TypeScript), bundled via NodejsFunction
-- **AWS SDK v3**: Bedrock Runtime, Polly, Transcribe Streaming, S3, DynamoDB
-- **Zod** for input validation
-
-### 5.3 Infra
-- **AWS CDK v2** (TypeScript), reusing the GuardLog template's Lambda/API Gateway/S3 patterns
-- New stack name: `PatrolprepStack`
-- Region: `ca-central-1`
-
-### 5.4 Why these vs alternatives
-
-| Decision | Why |
-|---|---|
-| Bedrock Claude 3.5 Sonnet (not Haiku) | Sonnet is genuinely better at multilingual nuance + cultural context. Worth the extra ~1s latency. |
-| JSON question bank in S3 | Simpler than DynamoDB for a static dataset of 30 questions. |
-| Polly over ElevenLabs | AWS-native, supported in ca-central-1, free tier covers our usage |
-| Web MediaRecorder over native | One codebase, works on iPhone + Android |
+Lowercase, IBM Plex Sans Condensed 600, period in accent blue.
 
 ---
 
 ## 6. Repo Structure
 
-Reuses the template skeleton, adds business logic:
-
 ```
 patrolprep/
-├── PATROLPREP_PROJECT.md              ← this file
-├── PATROLPREP_PATHWAY.md              ← step-by-step build guide
+├── PATROLPREP_PROJECT.md         ← this file
+├── PATROLPREP_PATHWAY.md         ← step-by-step build guide
 ├── README.md
 ├── package.json
 ├── pnpm-workspace.yaml
-├── .env.local
+├── .env.local                    ← NEXT_PUBLIC_API_URL points at workshop account
 │
 ├── app/
-│   ├── layout.tsx
-│   ├── globals.css                    ← design tokens
-│   ├── page.tsx                       ← landing/start
-│   ├── (study)/
-│   │   ├── practice/page.tsx          ← main practice exam UI
-│   │   └── results/page.tsx           ← end-of-session results
-│   └── api/
-│       └── (proxy routes if needed)
+│   ├── layout.tsx                ← fonts, dark bg
+│   ├── globals.css               ← design tokens (blue accent)
+│   ├── page.tsx                  ← landing
+│   └── (study)/
+│       ├── practice/page.tsx     ← main practice exam
+│       └── results/page.tsx      ← end-of-session results
 │
 ├── components/
 │   ├── question/
@@ -489,64 +457,35 @@ patrolprep/
 │   ├── voice/
 │   │   ├── MicButton.tsx
 │   │   └── VoiceModal.tsx
-│   └── ui/                            ← shadcn primitives
+│   └── ui/                       ← shadcn primitives
 │
 ├── lib/
-│   ├── api.ts                         ← API Gateway client
-│   ├── questions.ts                   ← question bank loader
-│   └── language.ts                    ← language utilities
+│   ├── api.ts                    ← API Gateway client
+│   ├── questions.ts              ← question bank loader
+│   └── language.ts               ← language utilities
 │
 ├── data/
-│   └── questions.json                 ← 30 questions, generated from manual
+│   └── questions.json            ← 30 questions (generated tonight)
 │
 ├── public/
-│   └── manual-chunks/                 ← chunked manual text for Bedrock context
+│   └── (manual PDF reference, not loaded at runtime)
 │
 └── infra/
-    ├── bin/infra.ts
-    ├── lib/infra-stack.ts
+    ├── bin/infra.ts              ← us-west-2 region
+    ├── lib/infra-stack.ts        ← deployed
     └── lambdas/
-        ├── explain.ts                 ← contextual explanation
-        ├── drill.ts                   ← generate 3 similar questions
-        ├── ask.ts                     ← free-form voice question
-        ├── transcribe.ts              ← speech to text
-        └── speak.ts                   ← text to speech (Polly)
+        ├── explain.ts            ← contextual explanation (TO BUILD)
+        ├── drill.ts              ← generate 3 similar questions (TO BUILD)
+        ├── ask.ts                ← free-form voice question (TO BUILD)
+        ├── transcribe.ts         ← speech to text (TO BUILD)
+        └── speak.ts              ← text to speech via Polly (TO BUILD)
 ```
 
 ---
 
-## 7. Per-person tasks
+## 7. The Pitch (3 minutes — Manraj delivers)
 
-### Manraj — Tech Lead, Pipeline + Pitch
-- Pre-event: rename template, redeploy CDK, upload manual to S3, prove explain Lambda works end to end
-- Day-of: own the explain + drill Lambdas, the API integration, and the pitch delivery
-- Final say on every merge to main
-
-### Julien — Backend + Voice
-- Pre-event: read this doc, look at Polly + Transcribe Node SDK examples
-- Day-of: own the transcribe + speak Lambdas, the mic-to-text-to-speech pipeline
-- Be the second AWS pair if Manraj is stuck
-
-### Cristian — Frontend (Question UI)
-- Pre-event: pull repo, get template running locally
-- Day-of: own QuestionCard, AnswerOption, ExplanationPanel, DrillPanel, the practice screen
-- Cleanest UI work — exactly your strength from class
-
-### Oscar — AI Prompts + Question Bank Pipeline
-- Pre-event: practice prompts on Claude.ai with sample questions from the manual; get the explanation tone right in Spanish/Tagalog/Punjabi
-- Day-of: own the Bedrock prompt engineering, validate outputs, build the canned-response fallback
-- Help Cristian/Manraj when prompts are tuned
-
-### Ali — Question Bank + Pitch + QA
-- Pre-event: this is THE critical pre-event task — generate the 30-question bank from the manual using Claude, save as `data/questions.json`
-- Day-of: own the language selector, the results screen, pitch deck, demo rehearsal
-- QA every 30 minutes — does the demo flow still work?
-
----
-
-## 8. The Pitch (3 minutes — Manraj delivers)
-
-### 8.1 Structure
+### 7.1 Structure
 
 **[0:00–0:25] The hook**
 
@@ -556,7 +495,7 @@ patrolprep/
 
 > "The obvious fix is: translate the manual. Wrong. We talked to instructors. The students who fail are not failing because of language. They're failing because of *concepts.* Words like 'indictable offense,' 'reasonable grounds,' 'Section 25 of the Criminal Code' — these don't have direct equivalents in their home country's legal system. A direct translation gives them the words but not the meaning."
 
-**[0:55–1:50] The product (live demo)**
+**[0:55–1:50] The product (LIVE DEMO)**
 
 > "We built PatrolPrep. Watch."
 >
@@ -570,7 +509,7 @@ patrolprep/
 
 **[1:50–2:30] The architecture (flex AWS)**
 
-> "Under the hood: the manual is stored chunked in S3. When the student gets a question wrong, a Lambda calls Amazon Bedrock — Claude 3.5 Sonnet via cross-region inference from ca-central-1, so all data stays in Canada. The contextual explanation streams back. Amazon Polly speaks it aloud in the student's language. Voice questions go through Amazon Transcribe. Six AWS services, all serverless, all in Canada Central."
+> "Under the hood: the manual is stored in S3. When the student gets a question wrong, a Lambda calls Amazon Bedrock — Claude Sonnet 3.5 via cross-region inference. The contextual explanation streams back. Amazon Polly speaks it aloud in the student's language. Voice questions go through Amazon Transcribe. Six AWS services, all serverless, all on AWS native infrastructure."
 
 **[2:30–2:55] The impact**
 
@@ -580,20 +519,27 @@ patrolprep/
 
 > "PatrolPrep. Pass the exam in your language, learn the concepts in any. Thank you."
 
-### 8.2 Q&A prep
+### 7.2 Q&A prep
 
 | Question | Answer |
 |---|---|
 | *How is this different from ChatGPT with the PDF?* | ChatGPT is reactive — you ask it questions. We're a structured exam prep tool with adaptive drill generation. Plus our explanations are culturally contextualized, not just translated. |
 | *Where do your questions come from?* | We extracted 30 from the official Alberta Basic Security Training Participant Manual. In production we'd partner with training schools to source the actual exam blueprint. |
-| *How accurate are the explanations?* | We constrain the LLM to the manual context for every response — RAG-style. Hallucination risk is low, and we always show the manual reference. |
-| *What about data privacy?* | Everything in ca-central-1. Audio recordings deleted after transcription. No user accounts means no PII to leak. |
+| *How accurate are the explanations?* | We constrain the LLM to the manual context for every response. Hallucination risk is low, and we always show the manual reference. |
+| *What about data privacy?* | Audio recordings deleted after transcription. No user accounts means no PII to leak. |
 | *What's the business model?* | B2B with private security training schools — they pay per student. Or a $5/month consumer SKU. |
-| *Have you talked to a training school?* | Honest answer: not yet — we built this in 6 hours. But Edmonton has 12+ private security training schools and NorQuest College runs the largest public program. |
+
+### 7.3 The Killer Statement (memorize this)
+
+If a judge cuts you off and asks one question — *"why are you different from the other 4 chatbot teams?"* — your answer:
+
+> "They translate the words. We translate the concepts. A Filipino student can read 'indictable offense' translated into Tagalog and still not understand what it means in Canadian law. We explain the underlying concept and compare it to a legal framework they already know. That's what makes someone pass."
+
+That sentence wins or loses the hackathon.
 
 ---
 
-## 9. The Demo Script (memorize this)
+## 8. The Demo Script (memorize)
 
 > *Opens app. Selects Tagalog from the language menu.*
 >
@@ -603,7 +549,7 @@ patrolprep/
 >
 > "Question 1: Under what conditions can a security guard use force? I'm going to pick C — protecting private property — because that feels right."
 >
-> *Submits. Wrong. Red flash on C, green check on B. Panel slides up.*
+> *Submits. Wrong. Red on C, green on B. Panel slides up.*
 >
 > "I got it wrong. Now look — Bedrock is generating an explanation in Tagalog right now. *(audio plays)* It tells me Section 25 of the Criminal Code, what 'reasonable grounds' actually means, and crucially — it compares this to how Philippine law handles citizen's arrest, so I can ground it in something I know."
 >
@@ -613,46 +559,36 @@ patrolprep/
 >
 > "That's PatrolPrep."
 
-Duration: 75 seconds. Practice this until it's muscle memory.
+Duration: 75 seconds. Practice until it's muscle memory.
 
 ---
 
-## 10. Risks & Contingencies
+## 9. Risks & Contingencies
 
 | Risk | Mitigation |
 |---|---|
-| Bedrock latency makes demo feel slow | Pre-bake responses for the demo question. Use `?demo=1` flag. |
-| Polly voice in Tagalog/Punjabi sounds robotic | Test all 3 languages tonight. Drop to text-only if voice is bad. |
-| Voice input fails on iPhone Safari | Test early. Fallback to text input field. |
-| Manual extraction is messy | Ali generates questions tonight from the PDF; if the PDF is image-only, use Textract. |
-| WiFi flakes during demo | Hotspot on Ali's phone. Pre-recorded video as last resort. |
-| Question bank too small/repetitive | Aim for 30 minimum, 50 ideal. Each topic needs at least 5 questions. |
-| Drill generator returns garbage JSON | Strip markdown fences. If still bad, fall back to a static "see related questions in topic X" link. |
+| Workshop account credentials expire mid-build | Refresh from workshop page. Re-run `aws configure set aws_session_token`. |
+| Bedrock latency makes demo feel slow | Pre-bake responses for the demo question via `?demo=1` flag |
+| Polly voice in Tagalog/Punjabi sounds robotic or doesn't exist | Polly has Spanish (Lupe). NO Tagalog/Punjabi voices. Show on-screen text in those languages, speak in English |
+| Voice input fails on iPhone Safari | Test early. Fallback to text input field |
+| Manual PDF extraction is messy | Generate questions tonight from the PDF using Claude.ai. If PDF is image-only, use Textract |
+| Wi-Fi flakes during demo | Hotspot on phone. Pre-recorded video as last resort |
+| Drill generator returns garbage JSON | Strip markdown fences. Fall back to "see related questions" link |
 
 ---
 
-## 11. Definition of Winning
+## 10. Definition of Winning
 
 We win if at 4:30 PM judging we can:
 1. Pitch the one-liner without stumbling
-2. Live-demo the wrong-answer → contextual explanation → drill flow in under 90 seconds, in 2 different languages
-3. Demo the voice-question feature in 1 language
-4. Answer "what's different about this vs ChatGPT?" in one crisp sentence
+2. Live-demo the wrong-answer → contextual explanation → drill flow in under 90 seconds
+3. Demo voice question in 1 language
+4. Answer "what's different from ChatGPT?" in one crisp sentence
 5. Show a UI that looks like a real product
 
 If all 5 land, we win. If 4, we place.
 
 ---
 
-## 12. The Killer Differentiation Statement (rehearse this)
-
-If a judge cuts you off and asks one question — *"why are you different from the other 4 chatbot teams?"* — your answer:
-
-> "They translate the words. We translate the concepts. A Filipino student can read 'indictable offense' translated into Tagalog and still not understand what it means in Canadian law. We explain the underlying concept and compare it to a legal framework they already know. That's what makes someone pass."
-
-That sentence wins or loses the hackathon. Memorize it.
-
----
-
-*Last updated: April 24, 2026 (eve of hackathon)*
+*Last updated: April 24, 2026 (eve of hackathon, infrastructure live in workshop account us-west-2)*
 *Owner: Manraj Singh Wazir*

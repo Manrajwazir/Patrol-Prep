@@ -1,0 +1,101 @@
+/* app/globals.css
+ * patrolprep design system.
+ * All colors, spacing, radii, shadows — single source of truth.
+ * Edit here, not in components.
+ */
+
+/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Background layers (near-black, warm — not pure #000) ── */
+    --bg-base: #0A0B0D;
+    /* page background */
+    --bg-surface: #131519;
+    /* cards, panels */
+    --bg-elevated: #1C1F24;
+    /* modals, dropdowns */
+    --bg-hover: #23272E;
+    /* hover state */
+
+    /* ── Borders (subtle, warm-dark) ── */
+    --border-subtle: #242830;
+    --border-default: #2E333C;
+    --border-strong: #3D434E;
+
+    /* ── Foreground (off-white, warmed) ── */
+    --fg-primary: #F2F0EC;
+    --fg-secondary: #A8ACB4;
+    --fg-tertiary: #6B6F78;
+
+    /* ── The accent: hazard amber. Used sparingly. ── */
+    --accent: #3B82F6;
+    --accent-dim: #A16A08;
+    --accent-glow: 59 130 246;
+    /* RGB components for rgba() use */
+
+    /* ── Severity colors (for incident tags) ── */
+    --severity-routine: #6B9D8A;
+    --severity-elevated: #E8A94A;
+    --severity-critical: #D84A4A;
+
+    /* ── Status ── */
+    --status-live: #4ADE80;
+
+    /* ── shadcn compatibility layer ── */
+    --background: 220 7% 5%;
+    --foreground: 36 11% 93%;
+    --card: 220 10% 9%;
+    --card-foreground: 36 11% 93%;
+    --popover: 220 10% 11%;
+    --popover-foreground: 36 11% 93%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 220 7% 5%;
+    --secondary: 220 10% 11%;
+    --secondary-foreground: 36 11% 93%;
+    --muted: 220 10% 11%;
+    --muted-foreground: 220 6% 65%;
+    --accent-shadcn: 220 10% 14%;
+    --accent-foreground: 36 11% 93%;
+    --destructive: 0 63% 57%;
+    --destructive-foreground: 36 11% 93%;
+    --border: 220 11% 18%;
+    --input: 220 11% 18%;
+    --ring: 38 92% 50%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    border-color: var(--border-default);
+  }
+
+  body {
+    background: var(--bg-base);
+    color: var(--fg-primary);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-display {
+    font-family: var(--font-condensed), system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+}
+
+/* ── Utility classes for type scale (patrolprep_PROJECT.md §4.3) ── */
+@layer utilities {
+  .text-micro {
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+}

@@ -1,100 +1,64 @@
-# PatrolPrep — Pathway (Tonight + Hackathon Day)
+# PatrolPrep — Pathway (Start to Finish)
 
-> **Tonight (April 24):** Fork the GuardLog template, redeploy, prep the question bank, validate the Bedrock prompts.
-> **Tomorrow (April 25):** 6 hours to ship a polished, demoable product.
-> **Submission:** 3:00 PM. **Pitches:** 4:30 PM.
+> One continuous build plan. Doesn't matter if you're doing it tonight or tomorrow. Pick up at whichever step you're on. Every step has clear "done when" criteria.
+>
+> **Where you are right now:** Infrastructure deployed to workshop AWS account in us-west-2. API Gateway live, returning stub data. Frontend skeleton works. Question bank not generated yet. No Bedrock integration yet. No real product UI yet.
+>
+> **Where you need to be:** A polished, demoable PatrolPrep at 3:00 PM April 25 with the wrong-answer → contextual explanation → drill flow working in 3 languages, plus voice questions.
 
 ---
 
-# ─────────────────────────────────────────────────────────────
-# TONIGHT — Friday April 24 (~3 hours)
-# ─────────────────────────────────────────────────────────────
+## How to use this doc
 
-> The goal tonight is to walk in tomorrow with all infrastructure deployed, the question bank ready, and the prompts validated. Zero surprises in the morning.
+Each step has:
+- **What** — the outcome
+- **How** — the approach + any code stubs
+- **Done when** — a testable success criterion
 
-## TONIGHT.1 — Fork the template (20 min)
+When using Antigravity or Claude Code to implement: paste the entire step (What/How/Done when) as the prompt. Include the relevant section of `PATROLPREP_PROJECT.md` for context.
 
-```powershell
-cd D:\projects
-robocopy guardlog-starter patrolprep /E /XD node_modules .next cdk.out .git
-cd patrolprep
-```
+---
 
-Open in VS Code. Find-and-replace across the entire workspace (`Ctrl+Shift+H`):
+## STEP 0 — Workshop credentials refresh (do this FIRST every session)
 
-| Find | Replace | Match case |
-|---|---|---|
-| `GuardlogStack` | `PatrolprepStack` | ✅ |
-| `guardlog` | `patrolprep` | (case-insensitive) |
-| `Guardlog` | `Patrolprep` | ✅ |
-| `GUARDLOG` | `PATROLPREP` | ✅ |
+Workshop AWS credentials expire every 4-8 hours. Before doing anything else in any session:
 
-**Important:** also rename:
-- `guardlog-api` (in `infra/lib/infra-stack.ts`) → `patrolprep-api`
-- The CSS accent color in `app/globals.css` — change `--accent: #F59E0B` to `--accent: #3B82F6` (focus blue) and `--accent-glow: 245 158 11` to `--accent-glow: 59 130 246`
-
-Initialize fresh git:
+1. Open the workshop credentials page
+2. Copy the new Access Key, Secret Key, Session Token
+3. Update your CLI:
 
 ```powershell
-git init
-git branch -M main
+aws configure set aws_access_key_id NEW_KEY --profile hackathon
+aws configure set aws_secret_access_key NEW_SECRET --profile hackathon
+aws configure set aws_session_token NEW_TOKEN --profile hackathon
 ```
 
-## TONIGHT.2 — Reinstall and redeploy (30 min)
-
+4. Verify:
 ```powershell
-pnpm install
-cd infra
-pnpm install
-$env:AWS_PROFILE="guardlog"
-cdk synth     # confirms it compiles
-cdk deploy    # creates the new PatrolprepStack alongside GuardlogStack
+aws sts get-caller-identity --profile hackathon
 ```
 
-The deploy takes 3-5 min. When done, **save the API Gateway URL** from the output.
+If it returns the workshop account ID, you're good. If it errors, re-grab credentials.
 
-Update `.env.local` in the project root with the new URL:
+**Done when:** `aws sts get-caller-identity --profile hackathon` returns the workshop account info.
 
-```
-NEXT_PUBLIC_API_URL=https://NEW-URL.execute-api.ca-central-1.amazonaws.com/prod
-```
+---
 
-Test it:
+# ═══════════════════════════════════════════════════════════
+# PHASE 1 — Question Bank + Bedrock Validation (~90 min)
+# ═══════════════════════════════════════════════════════════
 
-```powershell
-$env:AWS_PROFILE="guardlog"
-curl https://NEW-URL.execute-api.ca-central-1.amazonaws.com/prod/incidents
-```
+This is the highest-leverage work. The product fails without good questions and validated prompts.
 
-Should return `{"incidents":[],"stub":true}` — confirms the new stack works exactly like the old one.
+## STEP 1 — Generate the 30-question bank
 
-## TONIGHT.3 — Upload the manual to S3 (15 min)
+**What:** A `data/questions.json` file with 30 realistic Alberta security training exam questions covering 6 topics (5 each).
 
-Download the Alberta Basic Security Training Participant Manual PDF from the link the organizers sent. Save locally.
-
-Upload to your audio bucket (we'll repurpose it):
-
-```powershell
-aws s3 cp "C:\path\to\manual.pdf" s3://YOUR-AUDIO-BUCKET/manual/manual.pdf --profile guardlog
-```
-
-Verify:
-
-```powershell
-aws s3 ls s3://YOUR-AUDIO-BUCKET/manual/ --profile guardlog
-```
-
-You should see `manual.pdf` listed.
-
-## TONIGHT.4 — Generate the question bank (60 min) — Ali owns, Manraj backstops
-
-This is the highest-leverage prep task. The quality of the demo is bottlenecked by the question quality.
-
-**Step 1:** Open the manual PDF in your browser.
-
-**Step 2:** Open Claude.ai (the web UI, not your CLI tools).
-
-**Step 3:** Paste this prompt and attach the PDF:
+**How:**
+1. Download the Alberta Basic Security Training Participant Manual PDF from the link organizers sent
+2. Open Claude.ai (web UI)
+3. Attach the PDF
+4. Paste this prompt:
 
 ```
 You are generating a question bank for an Alberta Basic Security Training
@@ -134,465 +98,1243 @@ Return ONLY a valid JSON object in this schema:
 No markdown, no preamble, just the JSON.
 ```
 
-**Step 4:** Save Claude's response as `data/questions.json` in the patrolprep repo:
-
+5. Copy Claude's response, save to `data/questions.json`:
 ```powershell
-mkdir data
-# paste JSON into data/questions.json
+mkdir D:\projects\Patrol-Prep\data
+# Save the JSON to data/questions.json
 ```
 
-**Step 5:** Manually QA 5 random questions against the manual. Fix any factual errors. This 30 minutes is the difference between a great demo and an embarrassing one — don't skip QA.
+6. Manually QA 5 random questions against the manual. Fix any factual errors.
 
-## TONIGHT.5 — Validate Bedrock prompts (40 min) — Oscar owns
+**Done when:** `data/questions.json` exists with at least 30 questions, JSON parses cleanly, 5 random QA'd questions are factually correct.
 
-Open Claude.ai. Test each of the 3 prompts from `PATROLPREP_PROJECT.md` Section 3.4 with REAL question data:
+---
 
-**Test 1: Contextual Explanation**
+## STEP 2 — Upload manual to S3
 
-Pick a Use of Force question. Run the explanation prompt requesting **Tagalog**. Then **Spanish**. Then **Punjabi**. Look for:
-- Is the legal explanation correct?
-- Does the cultural comparison make sense?
-- Is the language natural (not robotic translation)?
-- Is it under 150 words?
-- Does it stay encouraging, not condescending?
+**What:** The PDF lives in S3 so Lambdas can reference it.
 
-If any output is bad, iterate the prompt. Save 3 final versions you're confident in (one per language).
+**How:**
 
-**Test 2: Drill Generator**
+```powershell
+# Find your bucket names
+aws s3 ls --profile hackathon
 
-Run it on a Use of Force question. Verify:
-- Returns valid JSON (no markdown fences)
+# Pick one of the patrolprepstack buckets, upload the PDF
+aws s3 cp "C:\path\to\manual.pdf" s3://YOUR-BUCKET-NAME/manual/manual.pdf --profile hackathon
+
+# Verify
+aws s3 ls s3://YOUR-BUCKET-NAME/manual/ --profile hackathon
+```
+
+Save the bucket name somewhere — you'll reference it from Lambdas.
+
+**Done when:** `aws s3 ls s3://YOUR-BUCKET-NAME/manual/` shows `manual.pdf`.
+
+---
+
+## STEP 3 — Validate Bedrock prompts (3 languages)
+
+**What:** Confirm all 3 prompts produce good output in English, Spanish, Tagalog, Punjabi via Claude.ai before wiring them into Lambdas.
+
+**How:**
+
+For each of the 3 prompts in PROJECT §4.5, do this in Claude.ai:
+
+**Test 1 — Contextual Explanation (the most important):**
+
+Paste prompt 1 with this fill-in:
+```
+Question: "Under Section 25 of the Criminal Code, a security guard may use force only when:"
+Options: ["They believe a crime is being committed", "They have reasonable grounds and the force is no more than necessary", "They are protecting private property", "Their employer has authorized it"]
+Correct answer: B
+Student's wrong answer: C
+Manual reference excerpt: "Security personnel may use force only when they have reasonable grounds to believe that force is necessary to prevent harm or to lawfully detain a person."
+Target language: Tagalog
+Student's likely cultural background: Filipino
+```
+
+Run it. Then run again with `Target language: Spanish`, then `Punjabi`, then `English`.
+
+Look for:
+- Legal explanation is correct
+- Cultural comparison makes sense (Philippine law for Tagalog, etc.)
+- Language is natural, not robotic translation
+- Under 150 words
+- Encouraging tone
+
+**Test 2 — Drill Generator:**
+
+Run prompt 2 on a Use of Force question. Verify:
+- Returns valid JSON (no markdown)
 - 3 distinct questions on the same concept
 - Each has 4 options with exactly 1 correct
-- Difficulty is reasonable
 
-**Test 3: Free-form Voice Question**
+**Test 3 — Voice Question:**
 
 Ask: "What's the difference between an indictable offense and a summary offense?" Request Tagalog. Verify the answer is grounded in the manual.
 
-**Save your final prompts to a notes file.** They're the IP.
+**Save your final prompts to a notes file `prompts.md` in the repo root.** They're what you'll paste into Lambdas.
 
-## TONIGHT.6 — Light frontend prep (15 min) — Cristian
-
-Just make sure the template still runs locally with the new accent color:
-
-```powershell
-cd patrolprep
-pnpm dev
-```
-
-Open http://localhost:3000. Verify the period in "guardlog." (or now "patrolprep.") shows in **blue** (#3B82F6), not amber. If still amber, check `app/globals.css` and `app/page.tsx`.
-
-That's it for tonight. **Sleep.**
-
-## TONIGHT.7 — Pre-pack the demo kit (15 min) — Ali
-
-- 2× laptops + chargers
-- 2× phones + chargers
-- HDMI dongle
-- Hotspot on phone, unlimited data plan confirmed
-- Headphones (for the team to test Polly audio without disturbing others)
-- Notebook + pens
-- Snacks, water bottles
-- Government ID for venue check-in
-- Reply "Confirmed" to the organizers' email
-
----
-
-## End-of-tonight checklist
-
-- [ ] PatrolPrep repo exists, renamed clean from GuardLog template
-- [ ] CDK redeployed as `PatrolprepStack`, API Gateway URL saved in `.env.local`
-- [ ] Manual PDF in S3 at `s3://YOUR-BUCKET/manual/manual.pdf`
-- [ ] `data/questions.json` exists with 30+ realistic questions
-- [ ] 5 questions QA'd against the manual (no factual errors)
-- [ ] All 3 Bedrock prompts validated in Spanish, Tagalog, Punjabi
-- [ ] Final prompt versions saved
-- [ ] Frontend runs locally with blue accent
-- [ ] Demo kit packed
-- [ ] Email confirmed
-
-If all 9 are checked, you sleep great. If any are unchecked, finish them before bed.
-
----
-
-# ─────────────────────────────────────────────────────────────
-# HACKATHON DAY — Saturday April 25
-# ─────────────────────────────────────────────────────────────
-
-> **Doors:** 8:30 AM · **Hacking starts:** 9:15 AM · **Submission:** 3:00 PM · **Pitches:** 4:30 PM
-
-## Schedule overview
-
-| Time | Block | Theme |
-|---|---|---|
-| 8:30–9:00 | Arrival, breakfast, sign-in | |
-| 9:00–9:15 | Welcome, instructions | |
-| **9:15–9:30** | **Standup + role kickoff** | (15 min, no code) |
-| 9:30–11:00 | **Block 1: Foundation** | core flow end-to-end |
-| 11:00–12:00 | **Block 2: Core features** | drill + voice |
-| 12:00–12:30 | LUNCH (working) | |
-| 12:30–2:00 | **Block 3: Polish + multilingual** | all 3 languages working |
-| 2:00–3:00 | **Block 4: Demo-proofing** | freeze, rehearse, fix |
-| 3:00 | **SUBMISSION DEADLINE** | |
-| 3:00–4:30 | Round 1 pitches + waiting | |
-| 4:30 | **FINAL PITCH** | |
-
----
-
-## Standup (9:15–9:30)
-
-Read this doc together. Confirm everyone has:
-- Cloned the patrolprep repo
-- `pnpm install` complete in root and `infra/`
-- AWS credentials configured (Manraj + Julien)
-- Their assignment from PROJECT §7
-
-Branches:
-- `feat/manraj-backend`
-- `feat/julien-voice`
-- `feat/cristian-question-ui`
-- `feat/oscar-prompts`
-- `feat/ali-results-and-pitch`
-
-Manraj: only person who merges to main until lunch.
+**Done when:** All 3 prompts produce solid output in all 4 languages. You have final prompt versions saved.
 
 ---
 
 # ═══════════════════════════════════════════════════════════
-# BLOCK 1 — Foundation (9:30 AM – 11:00 AM) · 1h 30min
+# PHASE 2 — Backend Lambdas (~2 hours)
 # ═══════════════════════════════════════════════════════════
 
-**Goal: Question appears, user picks wrong answer, Bedrock returns explanation in English. End-to-end flow live.**
-
-## [MANRAJ] T1.1 — Explain Lambda (real implementation)
+## STEP 4 — Build the Explain Lambda
 
 **What:** `POST /explain` accepts a question + wrong answer + language, returns Bedrock-generated contextual explanation.
 
 **How:**
-- Edit `infra/lambdas/explain.ts` (rename from `process.ts` if needed, or add new)
-- Use the validated prompt from TONIGHT.5
-- Call Bedrock Claude 3.5 Sonnet via `global.anthropic.claude-sonnet-4-5-...` profile
-- Strip markdown fences from response
-- Return `{ explanation: string, language: string, latencyMs: number }`
-- CORS headers, 30-second timeout
 
-**Done when:** `curl -X POST $API/explain -d '{question:..., wrongAnswer:..., language:"en"}'` returns a clean explanation in 3-5 seconds.
+Edit `infra/lambdas/process.ts` (rename to `explain.ts` if you want, or just repurpose):
 
-## [JULIEN] T1.2 — Question loader
+```typescript
+// infra/lambdas/explain.ts
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 
-**What:** `GET /questions/random` returns one random question from the bank.
+const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
+
+const SYSTEM_PROMPT = `[paste your validated prompt 1 from prompts.md]`;
+
+export const handler: APIGatewayProxyHandler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { question, options, correctAnswer, studentAnswer, manualExcerpt, language, culturalHint } = body;
+
+    const userMessage = `
+Question: ${question}
+Options: ${JSON.stringify(options)}
+Correct answer: ${options[correctAnswer]}
+Student's wrong answer: ${options[studentAnswer]}
+Manual reference excerpt: ${manualExcerpt}
+Target language: ${language}
+Student's likely cultural background: ${culturalHint || "newcomer to Canada"}
+`.trim();
+
+    const response = await bedrock.send(new ConverseCommand({
+      modelId: "us.anthropic.claude-sonnet-4-5-20250929-v1:0", // verify exact ID in their console
+      system: [{ text: SYSTEM_PROMPT }],
+      messages: [{ role: "user", content: [{ text: userMessage }] }],
+      inferenceConfig: { maxTokens: 800, temperature: 0.3 }
+    }));
+
+    const explanation = response.output?.message?.content?.[0]?.text || "";
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ explanation, language, latencyMs: Date.now() }),
+    };
+  } catch (err: any) {
+    console.error("explain error:", err);
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+Update `infra/lib/infra-stack.ts` to:
+- Add a new route `POST /explain` mapped to this Lambda (or repurpose existing process Lambda)
+- Make sure the Lambda has `bedrock:InvokeModel` and `bedrock:Converse` permissions (already in the stack from before)
+
+Deploy:
+```powershell
+cd infra
+$env:AWS_PROFILE="hackathon"
+cdk deploy
+```
+
+Test:
+```powershell
+curl -X POST https://YOUR-API/prod/explain `
+  -H "Content-Type: application/json" `
+  -d '{"question":"Under what conditions...","options":["A","B","C","D"],"correctAnswer":1,"studentAnswer":2,"manualExcerpt":"...","language":"Tagalog","culturalHint":"Filipino"}'
+```
+
+**Done when:** curl returns a clean Tagalog explanation in 3-5 seconds.
+
+---
+
+## STEP 5 — Build the Drill Lambda
+
+**What:** `POST /drill` returns 3 generated similar questions on the same concept.
 
 **How:**
-- Bank lives in `data/questions.json` — bundled with the Lambda
-- Or simpler: return from frontend directly, skip the Lambda for this. Static JSON in `public/data/questions.json` works fine.
 
-**Done when:** Frontend can call `fetch('/data/questions.json')` and get the array.
+Create `infra/lambdas/drill.ts`:
 
-## [CRISTIAN] T1.3 — Question screen UI
+```typescript
+// infra/lambdas/drill.ts
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 
-**What:** `app/(study)/practice/page.tsx` renders one question with 4 selectable options + a Submit button.
+const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
+
+const SYSTEM_PROMPT = `[paste your validated prompt 2 from prompts.md]`;
+
+export const handler: APIGatewayProxyHandler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { question, concept, manualExcerpt } = body;
+
+    const userMessage = `
+Original question: ${question}
+Concept being tested: ${concept}
+Manual reference: ${manualExcerpt}
+`.trim();
+
+    const response = await bedrock.send(new ConverseCommand({
+      modelId: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      system: [{ text: SYSTEM_PROMPT }],
+      messages: [{ role: "user", content: [{ text: userMessage }] }],
+      inferenceConfig: { maxTokens: 1500, temperature: 0.5 }
+    }));
+
+    const text = response.output?.message?.content?.[0]?.text || "{}";
+    // Strip markdown fences just in case
+    const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(clean);
+
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify(parsed),
+    };
+  } catch (err: any) {
+    console.error("drill error:", err);
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+Add to CDK stack: new route `POST /drill` mapped to this Lambda. Deploy.
+
+Test similarly to STEP 4.
+
+**Done when:** curl to `/drill` returns valid JSON with 3 questions.
+
+---
+
+## STEP 6 — Build the Voice Lambdas (Transcribe + Polly)
+
+**What:** `POST /transcribe` (audio blob → text) and `POST /speak` (text → MP3 audio).
 
 **How:**
-- Match the spec in PROJECT §4.4
-- Use shadcn `<Button>` and a custom radio-style for options
-- Selected state: blue border on the option
-- Disabled until an option is selected
-- On submit, set local state `submitted: true`
 
-**Done when:** Page renders a question, user can select an option, Submit becomes active.
+For Transcribe — use streaming for low latency, OR async for simplicity. Pick async if you want to ship faster:
 
-## [OSCAR] T1.4 — Wire Submit to Explain Lambda
+```typescript
+// infra/lambdas/transcribe.ts
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { TranscribeClient, StartTranscriptionJobCommand, GetTranscriptionJobCommand } from "@aws-sdk/client-transcribe";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-**What:** When user submits a wrong answer, call `/explain`, show the explanation panel.
+const transcribe = new TranscribeClient({ region: "us-west-2" });
+const s3 = new S3Client({ region: "us-west-2" });
+
+export const handler: APIGatewayProxyHandler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { audioBase64, languageCode = "en-US" } = body;
+
+    const buffer = Buffer.from(audioBase64, "base64");
+    const key = `voice-input/${Date.now()}.webm`;
+
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.AUDIO_BUCKET!,
+      Key: key,
+      Body: buffer,
+      ContentType: "audio/webm",
+    }));
+
+    const jobName = `vc-${Date.now()}`;
+    await transcribe.send(new StartTranscriptionJobCommand({
+      TranscriptionJobName: jobName,
+      Media: { MediaFileUri: `s3://${process.env.AUDIO_BUCKET}/${key}` },
+      LanguageCode: languageCode as any,
+      MediaFormat: "webm",
+    }));
+
+    // poll for completion
+    while (true) {
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await transcribe.send(new GetTranscriptionJobCommand({ TranscriptionJobName: jobName }));
+      if (res.TranscriptionJob?.TranscriptionJobStatus === "COMPLETED") {
+        const uri = res.TranscriptionJob.Transcript!.TranscriptFileUri!;
+        const data = await fetch(uri).then(r => r.json());
+        return {
+          statusCode: 200,
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify({ text: data.results.transcripts[0].transcript }),
+        };
+      }
+      if (res.TranscriptionJob?.TranscriptionJobStatus === "FAILED") {
+        throw new Error("Transcribe failed");
+      }
+    }
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+For Polly:
+
+```typescript
+// infra/lambdas/speak.ts
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
+
+const polly = new PollyClient({ region: "us-west-2" });
+
+const VOICE_BY_LANG: Record<string, string> = {
+  English: "Joanna",
+  Spanish: "Lupe",
+  Tagalog: "Joanna",  // Polly doesn't have Tagalog, fall back to English
+  Punjabi: "Joanna",  // same
+};
+
+export const handler: APIGatewayProxyHandler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { text, language = "English" } = body;
+    const voiceId = VOICE_BY_LANG[language] || "Joanna";
+
+    const response = await polly.send(new SynthesizeSpeechCommand({
+      Text: text,
+      VoiceId: voiceId as any,
+      OutputFormat: "mp3",
+      Engine: "neural",
+    }));
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.AudioStream as any) chunks.push(chunk);
+    const audioBase64 = Buffer.concat(chunks).toString("base64");
+
+    return {
+      statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ audioBase64, contentType: "audio/mpeg" }),
+    };
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+Add Polly + Transcribe permissions to the CDK stack (already in there from before — verify). Add new routes for `/transcribe` and `/speak`. Deploy.
+
+**Done when:** Both endpoints work via curl.
+
+**Note on Polly languages:** Polly does NOT support Tagalog or Punjabi. For those languages, Polly speaks in English while the screen displays the text in the target language. Be honest about this in the demo: "Polly handles voice in supported languages — for Tagalog and Punjabi we display the text prominently."
+
+---
+
+## STEP 7 — Build the Ask Lambda (free-form voice question)
+
+**What:** `POST /ask` takes a question + language, returns Bedrock answer using manual context.
 
 **How:**
-- After Submit: compare to `correctAnswer`
-- If correct: brief checkmark, "Next Question" button
-- If wrong: show ExplanationPanel sliding up
-- Inside ExplanationPanel: loading spinner → call `api.explain(question, wrongAnswer, currentLanguage)` → render the streamed text
 
-**Done when:** Wrong answer triggers a real Bedrock call and the explanation appears within 5 seconds.
+```typescript
+// infra/lambdas/ask.ts
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 
-## [ALI] T1.5 — Wire questions.json to UI
+const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
 
-**What:** Instead of hardcoded mock, load real questions from the bank.
+const SYSTEM_PROMPT = `[paste your validated prompt 3 from prompts.md]`;
 
-**How:**
-- Add `lib/questions.ts` with `loadQuestions()` and `getRandomQuestion()`
-- Import into the practice page
-- On mount, load all 30; on each "Next" click, advance to a new random one
+// For now use a static excerpt that covers most common topics.
+// Better: chunk the manual and do real RAG. For hackathon scope, static is fine.
+const MANUAL_CONTEXT = `[paste 1-2 paragraphs covering use of force, detention, charter rights]`;
 
-**Done when:** Refreshing the practice page shows different real questions from the manual.
+export const handler: APIGatewayProxyHandler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { question, language = "English" } = body;
 
-### Block 1 checkpoint (10:55)
+    const userMessage = `
+Student question: ${question}
+Relevant manual section: ${MANUAL_CONTEXT}
+Target language: ${language}
+`.trim();
 
-- Manraj: explain Lambda live ✅
-- Cristian: question UI working ✅
-- Oscar: wrong answer → explanation flow live in ENGLISH ✅
-- Ali: real questions loading ✅
+    const response = await bedrock.send(new ConverseCommand({
+      modelId: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+      system: [{ text: SYSTEM_PROMPT }],
+      messages: [{ role: "user", content: [{ text: userMessage }] }],
+      inferenceConfig: { maxTokens: 600, temperature: 0.3 }
+    }));
 
-If yes, you've already shipped a working MVP. Time to make it impressive.
+    const answer = response.output?.message?.content?.[0]?.text || "";
+
+    return {
+      statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ answer, language }),
+    };
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ error: err.message }),
+    };
+  }
+};
+```
+
+Add `/ask` route to CDK stack. Deploy.
+
+**Done when:** curl to `/ask` with a question returns a 3-paragraph answer in the requested language.
 
 ---
 
 # ═══════════════════════════════════════════════════════════
-# BLOCK 2 — Core Features (11:00 AM – 12:00 PM) · 1h
+# PHASE 3 — Frontend (~3 hours)
 # ═══════════════════════════════════════════════════════════
 
-**Goal: Drill mode works. Voice question works. Multilingual support added.**
+## STEP 8 — API client
 
-## [MANRAJ] T2.1 — Drill Lambda
-
-**What:** `POST /drill` returns 3 generated similar questions.
+**What:** `lib/api.ts` with all the methods the UI needs.
 
 **How:**
-- New Lambda `infra/lambdas/drill.ts`
-- Use Drill prompt from PROJECT §3.4
-- Force JSON output, parse, return as array
-- ~5 second latency tolerable
 
-**Done when:** Wrong answer flow has a "Drill this concept" button that returns 3 new questions to practice immediately.
+```typescript
+// lib/api.ts
+const BASE = process.env.NEXT_PUBLIC_API_URL!;
 
-## [CRISTIAN] T2.2 — Drill UI
+export const api = {
+  async explain(payload: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    studentAnswer: number;
+    manualExcerpt: string;
+    language: string;
+    culturalHint?: string;
+  }) {
+    const res = await fetch(`${BASE}/explain`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  },
 
-**What:** New panel that takes over the screen when user clicks "Drill." User answers 3 questions in a mini-session.
+  async drill(payload: { question: string; concept: string; manualExcerpt: string }) {
+    const res = await fetch(`${BASE}/drill`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  },
+
+  async ask(payload: { question: string; language: string }) {
+    const res = await fetch(`${BASE}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  },
+
+  async transcribe(audioBase64: string, languageCode: string) {
+    const res = await fetch(`${BASE}/transcribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audioBase64, languageCode }),
+    });
+    return res.json();
+  },
+
+  async speak(text: string, language: string) {
+    const res = await fetch(`${BASE}/speak`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, language }),
+    });
+    return res.json();
+  },
+};
+```
+
+**Done when:** Each method has a corresponding Lambda endpoint live.
+
+---
+
+## STEP 9 — Question loader
+
+**What:** `lib/questions.ts` to load and serve random questions.
 
 **How:**
-- Reuse QuestionCard, render in sequence
-- Track score: "2 of 3 correct"
-- After all 3, return to main practice flow
 
-**Done when:** Full drill loop works smoothly.
+```typescript
+// lib/questions.ts
+import questions from "@/data/questions.json";
 
-## [JULIEN] T2.3 — Voice Lambdas (Transcribe + Polly)
+export interface Question {
+  id: string;
+  topic: string;
+  difficulty: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  manualReference: string;
+  manualExcerpt: string;
+}
 
-**What:** Two Lambdas: `POST /audio/transcribe` (audio blob → text) and `POST /audio/speak` (text + language → audio MP3).
+export function getAllQuestions(): Question[] {
+  return questions.questions as Question[];
+}
 
-**How:**
-- Transcribe: use **Streaming Transcribe** for low latency. Or async if streaming is too complex — async is simpler, still <10s for 5-second audio clips
-- Polly: synchronous, returns base64 MP3
-- Polly voice IDs:
-  - English: `Joanna`
-  - Spanish: `Lupe`
-  - Tagalog: NOT supported by Polly — use Bedrock to translate to English text, speak in English. Be honest about this in the demo.
-  - Punjabi: NOT supported — same fallback
-- For Tagalog/Punjabi: render the text on screen prominently. Speech is a wow but reading is the actual accessibility.
+export function getRandomQuestion(exclude: string[] = []): Question {
+  const all = getAllQuestions().filter(q => !exclude.includes(q.id));
+  return all[Math.floor(Math.random() * all.length)];
+}
 
-**Done when:** Voice question records, transcribes, Bedrock answers, Polly speaks back in English (Spanish if user chose Spanish).
+export function getQuestionsByTopic(topic: string): Question[] {
+  return getAllQuestions().filter(q => q.topic === topic);
+}
+```
 
-## [JULIEN] T2.4 — Mic Button + Modal
+**Done when:** Importing `getRandomQuestion()` returns a real question.
 
-**What:** Floating mic button on every question screen. Tap → modal opens with record button → user speaks → answer plays.
+---
 
-**How:**
-- `components/voice/MicButton.tsx` and `VoiceModal.tsx`
-- Use Web MediaRecorder
-- After stop: blob → presigned S3 PUT (or send directly to Lambda as base64) → transcribe → ask Lambda → Polly → autoplay
+## STEP 10 — Language utilities + selector
 
-**Done when:** Tap mic, ask a question out loud, answer plays back within 10 seconds.
-
-## [OSCAR] T2.5 — Multilingual support
-
-**What:** Wire the language selector. Every API call passes `language` parameter. Bedrock prompts use that language.
-
-**How:**
-- `LanguageSelector.tsx` — dropdown with 4 options, persist to localStorage
-- A `useLanguage()` hook
-- All `api.*` calls accept and pass `language`
-- Test all 3 non-English: Spanish, Tagalog, Punjabi
-
-**Done when:** Switching language and getting a wrong answer produces an explanation in that language.
-
-## [ALI] T2.6 — Results screen
-
-**What:** After 10 questions, show: score, weak topics, encouragement to drill weak areas.
+**What:** `lib/language.ts` and `components/language/LanguageSelector.tsx`.
 
 **How:**
-- `app/(study)/results/page.tsx`
-- Pass session state via URL params or React Context
-- Show: "8/10. Strongest: Charter Rights. Practice more: Use of Force."
 
-**Done when:** Completing 10 questions takes you to a results page with real data.
+```typescript
+// lib/language.ts
+export type Language = "English" | "Spanish" | "Tagalog" | "Punjabi";
 
-### Block 2 checkpoint (11:55)
+export const LANGUAGES: { code: Language; label: string; flag: string; transcribeCode: string; cultural: string }[] = [
+  { code: "English",  label: "English",      flag: "🇨🇦", transcribeCode: "en-US",  cultural: "general" },
+  { code: "Spanish",  label: "Español",      flag: "🇪🇸", transcribeCode: "es-US",  cultural: "Latin American" },
+  { code: "Tagalog",  label: "Tagalog",       flag: "🇵🇭", transcribeCode: "tl-PH",  cultural: "Filipino" },
+  { code: "Punjabi",  label: "ਪੰਜਾਬੀ",        flag: "🇮🇳", transcribeCode: "pa-IN",  cultural: "South Asian" },
+];
 
-- Drill flow works ✅
-- Voice works (English at minimum) ✅
-- All 3 languages work for explanations ✅
-- Results screen exists ✅
+export function getLanguage(): Language {
+  if (typeof window === "undefined") return "English";
+  return (localStorage.getItem("patrolprep-lang") as Language) || "English";
+}
 
-**Eat lunch. Real lunch. 20 minutes. Phones away.**
+export function setLanguage(lang: Language) {
+  localStorage.setItem("patrolprep-lang", lang);
+}
+```
+
+```typescript
+// components/language/LanguageSelector.tsx
+"use client";
+import { useState, useEffect } from "react";
+import { LANGUAGES, getLanguage, setLanguage, type Language } from "@/lib/language";
+
+export function LanguageSelector() {
+  const [current, setCurrent] = useState<Language>("English");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => { setCurrent(getLanguage()); }, []);
+
+  const handleChange = (lang: Language) => {
+    setLanguage(lang);
+    setCurrent(lang);
+    setOpen(false);
+    window.dispatchEvent(new Event("language-change"));
+  };
+
+  const currentLang = LANGUAGES.find(l => l.code === current)!;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-sm transition-colors"
+      >
+        <span>{currentLang.flag}</span>
+        <span>{currentLang.label}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg overflow-hidden shadow-xl z-50">
+          {LANGUAGES.map(lang => (
+            <button
+              key={lang.code}
+              onClick={() => handleChange(lang.code)}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-[var(--bg-hover)] ${
+                lang.code === current ? "text-[var(--accent)]" : ""
+              }`}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Done when:** Language selector renders top-right of practice page, selecting a language persists across reloads.
+
+---
+
+## STEP 11 — Question UI components
+
+**What:** `QuestionCard`, `AnswerOption`, `ExplanationPanel` components.
+
+**How:**
+
+```typescript
+// components/question/AnswerOption.tsx
+"use client";
+import { motion } from "framer-motion";
+
+interface Props {
+  letter: "A" | "B" | "C" | "D";
+  text: string;
+  selected: boolean;
+  onSelect: () => void;
+  state?: "default" | "correct" | "incorrect";
+  disabled?: boolean;
+}
+
+export function AnswerOption({ letter, text, selected, onSelect, state = "default", disabled }: Props) {
+  const stateStyles = {
+    default: selected
+      ? "border-[var(--accent)] bg-[var(--accent)]/10"
+      : "border-[var(--border-default)] hover:bg-[var(--bg-hover)]",
+    correct: "border-[var(--correct)] bg-[var(--correct)]/10",
+    incorrect: "border-[var(--incorrect)] bg-[var(--incorrect)]/10",
+  };
+
+  return (
+    <motion.button
+      whileTap={{ scale: disabled ? 1 : 0.99 }}
+      onClick={() => !disabled && onSelect()}
+      disabled={disabled}
+      className={`w-full flex items-start gap-4 p-4 rounded-lg border transition-all text-left ${stateStyles[state]} ${disabled ? "cursor-default" : "cursor-pointer"}`}
+    >
+      <span className="font-mono text-sm text-[var(--fg-tertiary)] mt-0.5">{letter}</span>
+      <span className="text-[15px] leading-relaxed">{text}</span>
+    </motion.button>
+  );
+}
+```
+
+```typescript
+// components/question/QuestionCard.tsx
+"use client";
+import { useState } from "react";
+import { AnswerOption } from "./AnswerOption";
+import type { Question } from "@/lib/questions";
+
+interface Props {
+  question: Question;
+  questionNumber: number;
+  totalQuestions: number;
+  onAnswered: (selected: number, isCorrect: boolean) => void;
+}
+
+export function QuestionCard({ question, questionNumber, totalQuestions, onAnswered }: Props) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    if (selected === null) return;
+    setSubmitted(true);
+    onAnswered(selected, selected === question.correctAnswer);
+  };
+
+  const getOptionState = (index: number) => {
+    if (!submitted) return "default" as const;
+    if (index === question.correctAnswer) return "correct" as const;
+    if (index === selected) return "incorrect" as const;
+    return "default" as const;
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="text-micro text-[var(--fg-tertiary)] mb-6">
+        Question {questionNumber} of {totalQuestions}
+      </div>
+
+      <h2 className="text-[17px] leading-relaxed mb-8">{question.question}</h2>
+
+      <div className="space-y-3 mb-8">
+        {question.options.map((opt, i) => (
+          <AnswerOption
+            key={i}
+            letter={["A", "B", "C", "D"][i] as any}
+            text={opt}
+            selected={selected === i}
+            onSelect={() => setSelected(i)}
+            state={getOptionState(i)}
+            disabled={submitted}
+          />
+        ))}
+      </div>
+
+      {!submitted && (
+        <button
+          onClick={handleSubmit}
+          disabled={selected === null}
+          className="w-full py-3 rounded-lg bg-[var(--accent)] text-white font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--accent-dim)] transition-colors"
+        >
+          Submit Answer
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+```typescript
+// components/question/ExplanationPanel.tsx
+"use client";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { api } from "@/lib/api";
+import { getLanguage, LANGUAGES } from "@/lib/language";
+import type { Question } from "@/lib/questions";
+
+interface Props {
+  question: Question;
+  studentAnswer: number;
+  onDrill: () => void;
+  onContinue: () => void;
+}
+
+export function ExplanationPanel({ question, studentAnswer, onDrill, onContinue }: Props) {
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const lang = getLanguage();
+    const culturalHint = LANGUAGES.find(l => l.code === lang)?.cultural || "general";
+
+    api.explain({
+      question: question.question,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      studentAnswer,
+      manualExcerpt: question.manualExcerpt,
+      language: lang,
+      culturalHint,
+    }).then(res => {
+      setExplanation(res.explanation);
+      setLoading(false);
+    });
+  }, [question, studentAnswer]);
+
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", damping: 30, stiffness: 200 }}
+      className="fixed bottom-0 left-0 right-0 bg-[var(--bg-elevated)] border-t border-[var(--border-default)] p-6 max-h-[60vh] overflow-y-auto"
+    >
+      <div className="max-w-2xl mx-auto">
+        <div className="text-micro text-[var(--accent)] mb-3">EXPLANATION · {getLanguage()}</div>
+
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-4 bg-[var(--bg-surface)] rounded animate-pulse" />
+            <div className="h-4 bg-[var(--bg-surface)] rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-[var(--bg-surface)] rounded animate-pulse w-5/6" />
+          </div>
+        ) : (
+          <p className="text-[15px] leading-relaxed text-[var(--fg-primary)] mb-6">{explanation}</p>
+        )}
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onDrill}
+            disabled={loading}
+            className="flex-1 py-3 rounded-lg bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-dim)] disabled:opacity-30"
+          >
+            Drill this concept
+          </button>
+          <button
+            onClick={onContinue}
+            disabled={loading}
+            className="flex-1 py-3 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] disabled:opacity-30"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+```
+
+**Done when:** All 3 components render. The visual hierarchy looks like a real product (compare to Linear).
+
+---
+
+## STEP 12 — Practice page
+
+**What:** `app/(study)/practice/page.tsx` — the main exam screen.
+
+**How:**
+
+```typescript
+// app/(study)/practice/page.tsx
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { QuestionCard } from "@/components/question/QuestionCard";
+import { ExplanationPanel } from "@/components/question/ExplanationPanel";
+import { LanguageSelector } from "@/components/language/LanguageSelector";
+import { getRandomQuestion, type Question } from "@/lib/questions";
+
+const TOTAL = 10;
+
+export default function PracticePage() {
+  const router = useRouter();
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const [current, setCurrent] = useState<Question | null>(null);
+  const [studentAnswer, setStudentAnswer] = useState<number | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [answered, setAnswered] = useState<{ id: string; correct: boolean; topic: string }[]>([]);
+  const [seen, setSeen] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCurrent(getRandomQuestion());
+  }, []);
+
+  const handleAnswered = (selected: number, isCorrect: boolean) => {
+    setStudentAnswer(selected);
+    setAnswered(prev => [...prev, { id: current!.id, correct: isCorrect, topic: current!.topic }]);
+
+    if (isCorrect) {
+      // Show brief check, then auto-advance
+      setTimeout(() => nextQuestion(), 1200);
+    } else {
+      setShowExplanation(true);
+    }
+  };
+
+  const nextQuestion = () => {
+    if (questionNumber >= TOTAL) {
+      // Save session and go to results
+      sessionStorage.setItem("patrolprep-results", JSON.stringify(answered));
+      router.push("/results");
+      return;
+    }
+    setShowExplanation(false);
+    setStudentAnswer(null);
+    setSeen(prev => [...prev, current!.id]);
+    setCurrent(getRandomQuestion([...seen, current!.id]));
+    setQuestionNumber(prev => prev + 1);
+  };
+
+  if (!current) return <div>Loading...</div>;
+
+  return (
+    <main className="min-h-screen bg-[var(--bg-base)]">
+      <header className="flex justify-between items-center p-4 border-b border-[var(--border-subtle)]">
+        <div className="font-display text-xl font-semibold">
+          patrolprep<span style={{ color: "var(--accent)" }}>.</span>
+        </div>
+        <LanguageSelector />
+      </header>
+
+      <QuestionCard
+        question={current}
+        questionNumber={questionNumber}
+        totalQuestions={TOTAL}
+        onAnswered={handleAnswered}
+      />
+
+      {showExplanation && studentAnswer !== null && (
+        <ExplanationPanel
+          question={current}
+          studentAnswer={studentAnswer}
+          onDrill={() => alert("Drill mode — TODO")}
+          onContinue={nextQuestion}
+        />
+      )}
+    </main>
+  );
+}
+```
+
+**Done when:** Visiting `/practice` shows a question, you can answer, wrong answers trigger the explanation panel with real Bedrock output.
+
+---
+
+## STEP 13 — Landing page + results page
+
+**What:** Simple landing with a "Start Practice Exam" button + a results page showing score and weak topics.
+
+**How:**
+
+```typescript
+// app/page.tsx (replace the smoke test)
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="font-display text-6xl font-semibold tracking-tight mb-4">
+          patrolprep<span style={{ color: "var(--accent)" }}>.</span>
+        </h1>
+        <p className="text-[var(--fg-secondary)] mb-12 max-w-md mx-auto leading-relaxed">
+          Pass the Alberta security guard exam in your language. Learn the concepts in any.
+        </p>
+        <Link
+          href="/practice"
+          className="inline-block px-8 py-3 rounded-lg bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-dim)] transition-colors"
+        >
+          Start Practice Exam
+        </Link>
+      </div>
+    </main>
+  );
+}
+```
+
+```typescript
+// app/(study)/results/page.tsx
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+export default function ResultsPage() {
+  const [results, setResults] = useState<any[]>([]);
+
+  useEffect(() => {
+    const data = sessionStorage.getItem("patrolprep-results");
+    if (data) setResults(JSON.parse(data));
+  }, []);
+
+  const correct = results.filter(r => r.correct).length;
+  const total = results.length;
+
+  // Weak topics
+  const byTopic = results.reduce((acc, r) => {
+    if (!acc[r.topic]) acc[r.topic] = { correct: 0, total: 0 };
+    acc[r.topic].total += 1;
+    if (r.correct) acc[r.topic].correct += 1;
+    return acc;
+  }, {} as Record<string, { correct: number; total: number }>);
+
+  const weak = Object.entries(byTopic)
+    .filter(([_, v]: any) => v.correct / v.total < 0.6)
+    .map(([k]) => k);
+
+  return (
+    <main className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-md w-full">
+        <div className="text-micro text-[var(--fg-tertiary)] mb-2">SESSION RESULTS</div>
+        <h1 className="font-display text-5xl font-semibold mb-8">
+          {correct} / {total}
+        </h1>
+
+        {weak.length > 0 && (
+          <div className="mb-8 p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)]">
+            <div className="text-micro text-[var(--fg-tertiary)] mb-2">PRACTICE MORE</div>
+            <ul className="space-y-1">
+              {weak.map(topic => (
+                <li key={topic} className="text-sm">{topic.replace(/_/g, " ")}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <Link
+          href="/practice"
+          className="block w-full text-center py-3 rounded-lg bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-dim)]"
+        >
+          Try Again
+        </Link>
+      </div>
+    </main>
+  );
+}
+```
+
+**Done when:** Completing 10 questions navigates to results page showing real score.
+
+---
+
+## STEP 14 — Drill mode
+
+**What:** When user clicks "Drill this concept," show 3 generated questions in a mini-session.
+
+**How:**
+
+Create `components/question/DrillPanel.tsx` similar to `ExplanationPanel`. On mount, calls `api.drill(...)` to fetch 3 generated questions. Renders them as a simplified `QuestionCard` sequence. After the 3rd, shows "Back to Practice" button.
+
+Wire it up in the practice page: replace `onDrill={() => alert(...)}` with logic that opens the drill panel.
+
+**Done when:** Wrong answer → click "Drill this concept" → 3 fresh AI-generated questions → answer all 3 → return to main practice.
 
 ---
 
 # ═══════════════════════════════════════════════════════════
-# BLOCK 3 — Polish + Multilingual (12:30 – 2:00 PM) · 1h 30min
+# PHASE 4 — Voice + Polish (~2 hours)
 # ═══════════════════════════════════════════════════════════
 
-**Goal: It looks like a real product. Multilingual is rock solid. Demo flow is buttery smooth.**
+## STEP 15 — Mic button + voice modal
 
-## [CRISTIAN] T3.1 — Polish question UI
+**What:** Floating mic button bottom-right of practice page. Tap → modal with record → transcribe → ask Bedrock → Polly → autoplay answer.
 
-- Question card hover/select micro-animations (Framer Motion 200ms)
-- Wrong answer reveal: stagger color shifts on options (200ms each)
-- Explanation panel slide-up animation
-- Loading states everywhere (skeleton or pulse, not spinners)
+**How:**
 
-## [OSCAR] T3.2 — Streaming explanation text
+```typescript
+// components/voice/MicButton.tsx
+"use client";
+import { useState } from "react";
+import { VoiceModal } from "./VoiceModal";
 
-If Bedrock streaming is set up, render the explanation character-by-character (typewriter effect ~30 chars/sec). If not, show as a clean fade-in.
+export function MicButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-[var(--accent)] text-white text-2xl shadow-lg hover:scale-105 transition-transform"
+        aria-label="Ask a question"
+      >
+        🎤
+      </button>
+      {open && <VoiceModal onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+```
 
-## [JULIEN] T3.3 — Polly voice tuning
+```typescript
+// components/voice/VoiceModal.tsx
+"use client";
+import { useState, useRef } from "react";
+import { api } from "@/lib/api";
+import { getLanguage, LANGUAGES } from "@/lib/language";
 
-- Test Spanish (Lupe) sounds good — adjust SSML if rate is off
-- For Tagalog/Punjabi: fallback to English audio, but text is prominently rendered in the target language
-- Cache audio responses for the demo questions to ensure speed
+export function VoiceModal({ onClose }: { onClose: () => void }) {
+  const [recording, setRecording] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-## [MANRAJ] T3.4 — Demo mode flag
+  const start = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : "audio/mp4";
+    const recorder = new MediaRecorder(stream, { mimeType: mime });
+    chunksRef.current = [];
+    recorder.ondataavailable = e => chunksRef.current.push(e.data);
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      setProcessing(true);
+      const blob = new Blob(chunksRef.current);
+      const buf = await blob.arrayBuffer();
+      const base64 = Buffer.from(buf).toString("base64");
+      const lang = getLanguage();
+      const transcribeCode = LANGUAGES.find(l => l.code === lang)!.transcribeCode;
 
-- `?demo=1` URL param triggers pre-baked responses
-- Pre-bake the Use of Force question's explanation in all 4 languages
-- Pre-bake the drill response for that question
-- Pre-bake the voice question answer ("difference between indictable and summary")
-- This is the bulletproof fallback if Bedrock is slow during pitch
+      const transcribed = await api.transcribe(base64, transcribeCode);
+      const ask = await api.ask({ question: transcribed.text, language: lang });
+      const speak = await api.speak(ask.answer, lang);
 
-**Done when:** `?demo=1` URL works flawlessly even with Wi-Fi off (cached locally).
+      setAnswer(ask.answer);
+      const audio = new Audio(`data:audio/mpeg;base64,${speak.audioBase64}`);
+      audio.play();
+      setProcessing(false);
+    };
+    recorder.start();
+    recorderRef.current = recorder;
+    setRecording(true);
+  };
 
-## [ALI] T3.5 — Pitch deck final
+  const stop = () => {
+    recorderRef.current?.stop();
+    setRecording(false);
+  };
 
-- 5 slides matching PROJECT §8 structure
-- Slide 1: hook ("20,000 guards")
-- Slide 2: misdiagnosis ("translate the words → wrong")
-- Slide 3: live demo placeholder
-- Slide 4: architecture diagram (clean version of §3.1)
-- Slide 5: ask + close
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-[var(--bg-elevated)] rounded-xl p-8 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
+        <h3 className="font-display text-xl mb-2">Ask Anything</h3>
+        <p className="text-sm text-[var(--fg-secondary)] mb-6">In {getLanguage()}</p>
 
-Export to PDF. Test the projector cable.
+        {!processing && !answer && (
+          <button
+            onClick={recording ? stop : start}
+            className={`w-full py-4 rounded-lg font-medium ${
+              recording ? "bg-[var(--incorrect)]" : "bg-[var(--accent)]"
+            } text-white`}
+          >
+            {recording ? "Stop Recording" : "Start Recording"}
+          </button>
+        )}
 
-## [ALI] T3.6 — Demo rehearsal #1
+        {processing && (
+          <div className="text-center py-6">
+            <div className="text-sm text-[var(--fg-secondary)]">Processing...</div>
+          </div>
+        )}
 
-Manraj does the full pitch + demo. Ali times it. Identify any drag, fumble, or unclear moment. Repeat once more.
+        {answer && (
+          <div>
+            <div className="text-micro text-[var(--accent)] mb-2">ANSWER</div>
+            <p className="text-sm leading-relaxed mb-4">{answer}</p>
+            <button onClick={onClose} className="w-full py-2 rounded-lg bg-[var(--bg-surface)]">Close</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
 
-### Block 3 checkpoint (1:55)
+Add `<MicButton />` to practice page layout. Test on phone.
 
-- UI looks polished ✅
-- All 3 languages tested in real demo flow ✅
-- Demo mode works offline ✅
-- Pitch deck final ✅
-- Manraj has rehearsed at least twice ✅
+**Done when:** Tap mic, record a question, get a spoken answer back within 10 seconds.
+
+---
+
+## STEP 16 — Demo mode flag
+
+**What:** `?demo=1` URL param uses pre-baked responses for guaranteed demo speed.
+
+**How:**
+
+In `lib/api.ts`, wrap the `explain` function:
+
+```typescript
+const DEMO_RESPONSES: Record<string, string> = {
+  "Tagalog-q-001": "Tama ang sagot na B. Ayon sa Section 25 ng Criminal Code...", // pre-baked
+  "Spanish-q-001": "La respuesta correcta es B. Según la Sección 25 del Código Penal...",
+  "English-q-001": "The correct answer is B. Under Section 25 of the Criminal Code...",
+  // etc
+};
+
+export const api = {
+  async explain(payload: any) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("demo") === "1") {
+      const key = `${payload.language}-${payload.question.substring(0, 10)}`;
+      const cached = DEMO_RESPONSES[key];
+      if (cached) {
+        await new Promise(r => setTimeout(r, 800)); // fake "real" delay
+        return { explanation: cached, language: payload.language };
+      }
+    }
+    // ... normal fetch
+  },
+  // ...
+};
+```
+
+Pre-bake responses for 1-2 demo questions in all 3 non-English languages.
+
+**Done when:** `localhost:3000/practice?demo=1` works flawlessly with WiFi off.
+
+---
+
+## STEP 17 — Polish pass
+
+UI polish — go through every screen with fresh eyes:
+
+- Spacing consistent? (4, 8, 12, 16, 24 grid)
+- Typography correct? (display for headings, body for prose, mono for IDs)
+- Loading states? (skeletons, not spinners)
+- Hover states? (subtle bg-hover transition)
+- Mobile responsive? (test at 375px width)
+- Empty states? (what does the app look like with no data?)
+- Error states? (what if the Bedrock call fails?)
+
+**Done when:** Nothing looks half-finished.
 
 ---
 
 # ═══════════════════════════════════════════════════════════
-# BLOCK 4 — Demo-Proofing (2:00 PM – 3:00 PM) · 1h
+# PHASE 5 — Demo Prep (~1 hour)
 # ═══════════════════════════════════════════════════════════
 
-**Goal: Lock everything down. Submit on time. Be ready to pitch.**
+## STEP 18 — Backup video
 
-## T4.1 — FEATURE FREEZE (2:00 sharp)
+Record 90-second screen capture of perfect demo flow. Save MP4 to demo laptop desktop. Test playback offline.
 
-No new features. Only:
-- Bug fixes for the demo flow
-- Visual polish
-- Rehearsal
+## STEP 19 — Pitch rehearsal
 
-## T4.2 — Backup video (Manraj, 20 min)
+Manraj does the full pitch + demo at least 3 times. Time it. Cut anything over 3 minutes. Record once on phone, review playback for filler words.
 
-Record a 90-second screen capture of the perfect demo flow:
-- Open practice exam
-- Get a question wrong
-- See explanation in Tagalog
-- Tap "Drill"
-- Use voice mic
-- Show results screen
+## STEP 20 — Equipment check
 
-Save as MP4 on demo laptop desktop. **Test playback offline.**
+- Laptops + chargers
+- Phones + chargers
+- HDMI dongle
+- Hotspot ready
+- Headphones (test Polly audio without disturbing)
+- Pitch slides exported as PDF (no internet dependency)
+- Backup video on desktop
 
-## T4.3 — Submission (Manraj, by 2:50 PM)
+---
 
-- Push final code to GitHub (public repo)
-- Submit via the form Edmonton Unlimited gave us
-- Include:
-  - GitHub link
-  - Live URL (Amplify)
-  - Team member names
-  - Project description (use the one-liner from §0)
+## STEP 21 — Submit (3:00 PM SHARP)
 
-**Done at 2:55. Set a phone alarm for 2:45 as warning.**
-
-## T4.4 — Final rehearsal (Manraj + Ali, 2:50–3:00)
-
-One last full pitch + demo. Time it. Should be 3:00–3:15. If over 3:30, cut something.
+- Push final code to GitHub
+- Submit via the form Edmonton Unlimited gave you
+- Include: GitHub URL, Live URL, team names, project description (use one-liner from PROJECT §0)
 
 ---
 
 # ═══════════════════════════════════════════════════════════
-# BLOCK 5 — Round 1 Pitches & Final Presentation (3:00 PM onwards)
-# ═══════════════════════════════════════════════════════════
-
-## 3:00–4:30 — Round 1 pitches + waiting
-
-You may pitch in this round to a smaller judging panel. Use the same 3-minute pitch. After pitching, watch other teams briefly to scout — but mostly stay focused on your own demo.
-
-DO NOT touch code after 3:00 unless something is broken in the demo. If you absolutely must:
-- Only Manraj or Julien
-- One commit max
-- Test it 3 times before stepping away
-
-## 4:30 — FINAL PRESENTATION
-
-**Setup (start 5 min before your slot):**
-- Demo laptop on the projector
-- App open in tab 1
-- Pitch slides open in tab 2
-- Backup video open in tab 3
-- Notifications disabled
-- Volume up (Polly audio matters)
-- Phone on Do Not Disturb
-
-**Pitch:**
-- Manraj delivers
-- Ali operates the laptop if Manraj needs both hands
-- Cristian/Julien/Oscar quiet during pitch — alive during Q&A
-
-**Q&A:**
-- Manraj answers unless it's a deep technical question
-- For technical Q&A, look at the relevant track owner ("Julien — voice pipeline?")
-- If you don't know the answer, say "Great question — we'd want to validate that with real users before committing to an answer." Better than bullshitting.
-
-## 5:30 — Awards 🏆
-
-Stay until the end. Refund depends on it. Plus you want to be in the room when they call your team.
-
----
-
 # DECISION TREES
+# ═══════════════════════════════════════════════════════════
 
-## If Bedrock fails / is slow during pitch
-Switch to `?demo=1` URL. Speak through it like nothing happened. "Let me show you the cached version for speed."
+**If Bedrock is slow during demo** → switch to `?demo=1`. "Cached for speed."
 
-## If Wi-Fi fails
-Use Ali's hotspot. Or play the backup video: "WiFi is being WiFi — here's the recording."
+**If Wi-Fi fails** → hotspot. Or backup video.
 
-## If voice doesn't work in the demo
-Skip it. Don't fight broken tech on stage. "Voice is also supported — happy to show offline."
+**If voice doesn't work** → skip it during demo. "Voice is supported, happy to show offline."
 
-## If a teammate stuck at 30+ min
-Pair with Manraj. Reassign if needed. Never let one person block.
+**If teammate stuck 30+ min** → pair or reassign. Never block.
 
-## If ahead at 1:30 PM
-- Don't add features. Polish.
-- Add 5 more pre-seeded test sessions to results page so demo looks data-rich
-- Add bookmarking
-- Record a second backup video from a different angle
+**If ahead at 1:30 PM** → polish, don't add features.
 
-## If behind at 12:30 PM
-Sacrifice in this order:
-1. Voice input → drop, focus on text + language buttons
-2. Polly speech → text-only explanations
-3. Drill mode → just show "drill coming soon" button
-4. Multilingual → English + Spanish only
+**If behind at 12:30 PM** → cut in this order:
+1. Voice (drop entirely, text-only Q&A)
+2. Drill mode (just show "drill coming soon")
+3. Multilingual (English + Spanish only)
+4. Results screen (skip, go straight to "thanks for trying")
 
 The minimum viable demo: question → wrong answer → contextual explanation in Spanish. Everything else is polish.
 
@@ -600,12 +1342,10 @@ The minimum viable demo: question → wrong answer → contextual explanation in
 
 # THE ONE RULE
 
-**Every task in this doc has "what / how / done when." If you can't say what done means, you're not on the right thing. Stop. Figure it out. Then start.**
-
-You have all the infrastructure. You have the team. You have the differentiating idea. You have the prompts validated. You have 6 hours.
-
 Ship one thing that wows. Don't build three things that kinda work.
+
+Every step has "done when." If you can't say what done means, you're not on the right thing. Stop. Figure it out. Then start.
 
 ---
 
-*Last updated: April 24, 2026 (eve of hackathon)*
+*Last updated: April 24, 2026 (eve of hackathon, infrastructure live)*
