@@ -1,33 +1,57 @@
 // lib/api.ts
-// Thin wrapper around fetch() that points at our API Gateway.
-// On April 25 we'll add authentication headers here.
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!BASE_URL) {
-    console.warn("NEXT_PUBLIC_API_URL not set — API calls will fail");
-}
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 export const api = {
-    async listIncidents() {
-        const res = await fetch(`${BASE_URL}/incidents`);
-        if (!res.ok) throw new Error(`Failed to list incidents: ${res.status}`);
-        return res.json();
-    },
-
-    async getIncident(id: string) {
-        const res = await fetch(`${BASE_URL}/incidents/${id}`);
-        if (!res.ok) throw new Error(`Failed to get incident ${id}: ${res.status}`);
-        return res.json();
-    },
-
-    async requestUploadUrl(contentType: string) {
-        const res = await fetch(`${BASE_URL}/upload`, {
+    async explain(payload: {
+        question: string;
+        options: string[];
+        correctAnswer: number;
+        studentAnswer: number;
+        manualExcerpt: string;
+        language: string;
+        culturalHint?: string;
+    }) {
+        const res = await fetch(`${BASE}/explain`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contentType }),
+            body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error(`Failed to request upload URL: ${res.status}`);
+        return res.json();
+    },
+
+    async drill(payload: { question: string; concept: string; manualExcerpt: string }) {
+        const res = await fetch(`${BASE}/drill`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        return res.json();
+    },
+
+    async ask(payload: { question: string; language: string }) {
+        const res = await fetch(`${BASE}/ask`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        return res.json();
+    },
+
+    async transcribe(audioBase64: string, languageCode: string) {
+        const res = await fetch(`${BASE}/transcribe`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audioBase64, languageCode }),
+        });
+        return res.json();
+    },
+
+    async speak(text: string, language: string) {
+        const res = await fetch(`${BASE}/speak`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, language }),
+        });
         return res.json();
     },
 };

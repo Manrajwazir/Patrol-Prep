@@ -30,7 +30,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "patrolprep.",
-  description: "Speak it. Ship it. Defensible security documentation.",
+  description: "Pass the Alberta security guard exam in your language. Learn the concepts in any.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

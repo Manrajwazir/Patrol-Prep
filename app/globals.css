@@ -1,58 +1,45 @@
-/* app/globals.css
- * patrolprep design system.
- * All colors, spacing, radii, shadows — single source of truth.
- * Edit here, not in components.
- */
-
-/* stylelint-disable */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* app/globals.css — PatrolPrep design system */
+@import "tailwindcss";
 
 @layer base {
   :root {
-    /* ── Background layers (near-black, warm — not pure #000) ── */
-    --bg-base: #0A0B0D;
-    /* page background */
-    --bg-surface: #131519;
-    /* cards, panels */
-    --bg-elevated: #1C1F24;
-    /* modals, dropdowns */
-    --bg-hover: #23272E;
-    /* hover state */
+    --bg-base:        #0A0B0D;
+    --bg-surface:     #131519;
+    --bg-elevated:    #1C1F24;
+    --bg-hover:       #23272E;
 
-    /* ── Borders (subtle, warm-dark) ── */
-    --border-subtle: #242830;
+    --border-subtle:  #242830;
     --border-default: #2E333C;
-    --border-strong: #3D434E;
+    --border-strong:  #3D434E;
 
-    /* ── Foreground (off-white, warmed) ── */
-    --fg-primary: #F2F0EC;
-    --fg-secondary: #A8ACB4;
-    --fg-tertiary: #6B6F78;
+    --fg-primary:     #F2F0EC;
+    --fg-secondary:   #A8ACB4;
+    --fg-tertiary:    #6B6F78;
 
-    /* ── The accent: hazard amber. Used sparingly. ── */
-    --accent: #3B82F6;
-    --accent-dim: #A16A08;
-    --accent-glow: 59 130 246;
-    /* RGB components for rgba() use */
+    --accent:         #3B82F6;
+    --accent-dim:     #2563EB;
+    --accent-glow:    59 130 246;
 
-    /* ── Severity colors (for incident tags) ── */
-    --severity-routine: #6B9D8A;
-    --severity-elevated: #E8A94A;
-    --severity-critical: #D84A4A;
+    --correct:        #4ADE80;
+    --incorrect:      #F87171;
+    --status-live:    #4ADE80;
 
-    /* ── Status ── */
-    --status-live: #4ADE80;
+    /* Topic accent colors */
+    --topic-use_of_force:          #C77B58;
+    --topic-lawful_detention:      #5C8AA6;
+    --topic-charter_rights:        #8B7AB3;
+    --topic-note_taking_reporting: #6B9D8A;
+    --topic-patrol_procedures:     #B89A5E;
+    --topic-emergency_response:    #C25E5E;
 
-    /* ── shadcn compatibility layer ── */
+    /* shadcn compat */
     --background: 220 7% 5%;
     --foreground: 36 11% 93%;
     --card: 220 10% 9%;
     --card-foreground: 36 11% 93%;
     --popover: 220 10% 11%;
     --popover-foreground: 36 11% 93%;
-    --primary: 38 92% 50%;
+    --primary: 217 91% 60%;
     --primary-foreground: 220 7% 5%;
     --secondary: 220 10% 11%;
     --secondary-foreground: 36 11% 93%;
@@ -64,38 +51,62 @@
     --destructive-foreground: 36 11% 93%;
     --border: 220 11% 18%;
     --input: 220 11% 18%;
-    --ring: 38 92% 50%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
   }
 
-  * {
-    border-color: var(--border-default);
-  }
+  * { border-color: var(--border-default); }
 
   body {
     background: var(--bg-base);
     color: var(--fg-primary);
     font-family: var(--font-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
-  .font-display {
-    font-family: var(--font-condensed), system-ui, sans-serif;
-  }
-
-  .font-mono {
-    font-family: var(--font-mono), ui-monospace, monospace;
-  }
+  .font-display { font-family: var(--font-condensed), system-ui, sans-serif; }
+  .font-mono    { font-family: var(--font-mono), ui-monospace, monospace; }
 }
 
-/* ── Utility classes for type scale (patrolprep_PROJECT.md §4.3) ── */
 @layer utilities {
   .text-micro {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.4;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: var(--fg-tertiary);
   }
 }
+
+/* Grid background */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-hover) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Accent glow pulse for landing */
+@keyframes glow-pulse {
+  0%,100% { text-shadow: 0 0 8px rgba(var(--accent-glow),.6), 0 0 20px rgba(var(--accent-glow),.3); }
+  50%      { text-shadow: 0 0 16px rgba(var(--accent-glow),.8), 0 0 40px rgba(var(--accent-glow),.5); }
+}
+.accent-glow { animation: glow-pulse 2.5s ease-in-out infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
