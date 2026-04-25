@@ -8,6 +8,7 @@ import { ExplanationPanel } from "@/components/question/ExplanationPanel";
 import { DrillPanel } from "@/components/question/DrillPanel";
 import { LanguageSelector } from "@/components/language/LanguageSelector";
 import { MicButton } from "@/components/voice/MicButton";
+import { addSession, isOnboarded } from "@/lib/student";
 import { getRandomQuestion, type Question } from "@/lib/questions";
 import { getLanguage } from "@/lib/language";
 
@@ -40,6 +41,13 @@ export default function PracticePage() {
     const [showDrill, setShowDrill] = useState(false);
     const [answered, setAnswered] = useState<AnswerRecord[]>([]);
     const [seen, setSeen] = useState<string[]>([]);
+
+    // Route guard
+    useEffect(() => {
+        if (!isOnboarded()) {
+            router.replace("/");
+        }
+    }, [router]);
 
     // Timer
     useEffect(() => {
@@ -74,6 +82,16 @@ export default function PracticePage() {
         const results = latestAnswered ?? answered;
         if (questionNumber >= TOTAL) {
             sessionStorage.setItem("patrolprep-results", JSON.stringify(results));
+            
+            // Save to student profile history
+            addSession({
+                id: sessionId,
+                date: new Date().toISOString(),
+                answers: results.map(r => ({ questionId: r.id, correct: r.correct, topic: r.topic })),
+                score: results.filter(r => r.correct).length,
+                total: TOTAL
+            });
+
             router.push("/results");
             return;
         }

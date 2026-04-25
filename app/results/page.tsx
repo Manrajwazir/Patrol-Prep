@@ -147,7 +147,7 @@ export default function ResultsPage() {
                         Try Again
                     </Link>
                     <Link
-                        href="/"
+                        href="/dashboard"
                         className="block w-full text-center py-3.5 rounded-xl font-medium text-sm transition-all duration-200"
                         style={{
                             background: "var(--bg-surface)",
@@ -155,7 +155,7 @@ export default function ResultsPage() {
                             border: "1px solid var(--border-default)",
                         }}
                     >
-                        Back to Home
+                        View Dashboard →
                     </Link>
                 </div>
             </motion.div>
