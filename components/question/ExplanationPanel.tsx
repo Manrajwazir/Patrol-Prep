@@ -11,7 +11,7 @@ import type { Question } from "@/lib/questions";
 const EASE = [0.2, 0.8, 0.2, 1] as const;
 
 // Move 6 — cultural comparison by language
-const CULTURAL: Record<Language, string> = {
+const CULTURAL: Record<string, string> = {
     English:  "General Canadian legal context.",
     Spanish:  "Compared to Latin American legal frameworks — civil law tradition.",
     Tagalog:  "Compared to Philippine legal tradition — Revised Penal Code context.",

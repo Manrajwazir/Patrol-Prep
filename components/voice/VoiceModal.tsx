@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
-import { getLanguage, LANGUAGES } from "@/lib/language";
+import { getLanguage, LANGUAGES, getCountry, COUNTRIES } from "@/lib/language";
 
 type Stage = "idle" | "recording" | "processing" | "answer" | "error";
 
@@ -40,6 +40,8 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
 
     const lang     = getLanguage();
     const langMeta = LANGUAGES.find(l => l.code === lang)!;
+    const countryName = getCountry();
+    const countryMeta = COUNTRIES.find(c => c.name === countryName);
     const noVoice  = lang === "Tagalog" || lang === "Punjabi";
 
     const start = async () => {
@@ -121,7 +123,7 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                         <span className="text-micro" style={{ color: "var(--accent)" }}>VOICE Q&amp;A</span>
                         <span style={{ color: "var(--border-strong)" }}>·</span>
                         <span className="text-micro">{lang.toUpperCase()}</span>
-                        <span>{langMeta.flag}</span>
+                        <span>{countryMeta?.flag || "🇨🇦"}</span>
                     </div>
                     <button style={{ ...ghostBtn, padding: "4px 10px" }} onClick={handleClose}>ESC</button>
                 </div>

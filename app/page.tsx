@@ -77,7 +77,7 @@ export default function Home() {
           >
             <div className="p-8 rounded-2xl w-full mb-6" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)" }}>
               <div className="flex items-center justify-center gap-3 mb-2">
-                <span className="text-2xl">{LANGUAGES.find(l => l.code === student.language)?.flag}</span>
+                <span className="text-2xl">{COUNTRIES.find(c => c.name === student.country)?.flag || "🇨🇦"}</span>
                 <span className="text-micro" style={{ color: "var(--accent)" }}>WELCOME BACK</span>
               </div>
               <h2 className="text-2xl font-semibold text-center" style={{ color: "var(--fg-primary)" }}>
