@@ -1,11 +1,13 @@
-// app/practice/page.tsx — Move 1 (status bar), Move 9 (progress dots)
+// app/practice/page.tsx — Status bar, progress dots, drill mode
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { QuestionCard } from "@/components/question/QuestionCard";
 import { ExplanationPanel } from "@/components/question/ExplanationPanel";
+import { DrillPanel } from "@/components/question/DrillPanel";
 import { LanguageSelector } from "@/components/language/LanguageSelector";
+import { MicButton } from "@/components/voice/MicButton";
 import { getRandomQuestion, type Question } from "@/lib/questions";
 import { getLanguage } from "@/lib/language";
 
@@ -35,6 +37,7 @@ export default function PracticePage() {
     const [current, setCurrent] = useState<Question | null>(null);
     const [studentAnswer, setStudentAnswer] = useState<number | null>(null);
     const [showExplanation, setShowExplanation] = useState(false);
+    const [showDrill, setShowDrill] = useState(false);
     const [answered, setAnswered] = useState<AnswerRecord[]>([]);
     const [seen, setSeen] = useState<string[]>([]);
 
@@ -61,7 +64,6 @@ export default function PracticePage() {
         if (isCorrect) {
             setTimeout(() => nextQuestion(), 1400);
         } else {
-            // Cinematic reveal plays 800ms before panel appears
             setTimeout(() => setShowExplanation(true), 800);
         }
     };
@@ -73,10 +75,22 @@ export default function PracticePage() {
             return;
         }
         setShowExplanation(false);
+        setShowDrill(false);
         setStudentAnswer(null);
         setSeen(prev => [...prev, current!.id]);
         setCurrent(getRandomQuestion([...seen, current!.id]));
         setQuestionNumber(prev => prev + 1);
+    };
+
+    // Drill handlers
+    const handleStartDrill = () => {
+        setShowExplanation(false);
+        setShowDrill(true);
+    };
+
+    const handleDrillComplete = () => {
+        setShowDrill(false);
+        nextQuestion();
     };
 
     if (!current) return (
@@ -85,7 +99,7 @@ export default function PracticePage() {
         </main>
     );
 
-    // Move 9 — Progress dot state per position
+    // Progress dot state
     const dotState = (i: number): "correct" | "incorrect" | "current" | "upcoming" => {
         if (i < answered.length) return answered[i].correct ? "correct" : "incorrect";
         if (i === answered.length) return "current";
@@ -95,17 +109,15 @@ export default function PracticePage() {
     return (
         <main className="min-h-screen bg-grid" style={{ background: "var(--bg-base)" }}>
 
-            {/* ── Move 1: Status bar ── */}
+            {/* ── Status bar ── */}
             <header
                 className="flex items-center justify-between px-5 sm:px-8 h-11"
                 style={{ borderBottom: "1px solid var(--border-subtle)" }}
             >
-                {/* Left: wordmark */}
                 <div className="font-display text-lg font-semibold tracking-tight flex-shrink-0">
                     patrolprep<span style={{ color: "var(--accent)" }}>.</span>
                 </div>
 
-                {/* Centre: metadata strip */}
                 <div className="hidden sm:flex items-center gap-0 font-mono text-micro overflow-hidden">
                     {[
                         `SESSION ${sessionId}`,
@@ -122,11 +134,10 @@ export default function PracticePage() {
                     ))}
                 </div>
 
-                {/* Right: language selector */}
                 <LanguageSelector />
             </header>
 
-            {/* ── Move 9: Progress dots ── */}
+            {/* ── Progress dots ── */}
             <div
                 className="flex items-center justify-center gap-1.5 py-3"
                 style={{ borderBottom: "1px solid var(--border-subtle)" }}
@@ -172,11 +183,24 @@ export default function PracticePage() {
                     <ExplanationPanel
                         question={current}
                         studentAnswer={studentAnswer}
-                        onDrill={() => alert("Drill mode — TODO")}
+                        onDrill={handleStartDrill}
                         onContinue={nextQuestion}
                     />
                 )}
             </AnimatePresence>
+
+            {/* ── Drill panel ── */}
+            <AnimatePresence>
+                {showDrill && (
+                    <DrillPanel
+                        sourceQuestion={current}
+                        onComplete={handleDrillComplete}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* ── Floating mic button ── */}
+            {!showDrill && <MicButton />}
         </main>
     );
 }
