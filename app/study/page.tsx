@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStudent, isOnboarded, StudentProfile, getWeakTopics } from "@/lib/student";
 import { TOPICS } from "@/data/topics";
-import { LANGUAGES } from "@/lib/language";
+import { LANGUAGES, COUNTRIES } from "@/lib/language";
 import { LanguageSelector } from "@/components/language/LanguageSelector";
 import { MicButton } from "@/components/voice/MicButton";
 import { api } from "@/lib/api";
@@ -35,6 +35,7 @@ export default function StudyGuidePage() {
 
     if (!mounted || !student) return null;
     const langMeta = LANGUAGES.find(l => l.code === student.language) || LANGUAGES[0];
+    const countryMeta = COUNTRIES.find(c => c.name === student.country) || COUNTRIES[0];
 
     const handleExplain = async (topicId: string, conceptIndex: number, excerpt: string) => {
         const key = `${topicId}-${conceptIndex}`;
@@ -42,7 +43,7 @@ export default function StudyGuidePage() {
 
         setExplaining(prev => ({ ...prev, [key]: true }));
         try {
-            const prompt = `Please explain this Alberta security law concept simply in ${student.language}. Then, provide a brief cultural comparison to the laws in ${langMeta.homeCountry}: "${excerpt}"`;
+            const prompt = `Please explain this Alberta security law concept simply in ${student.language}. Then, provide a brief cultural comparison to the laws in ${countryMeta.name}: "${excerpt}"`;
             const res = await api.ask({ question: prompt, language: student.language });
             setExplanations(prev => ({ ...prev, [key]: res.answer }));
         } catch (err) {
@@ -75,7 +76,7 @@ export default function StudyGuidePage() {
                     </span>
                     <span className="flex items-center">
                         <span style={{ color: "var(--fg-tertiary)" }}>{student.language.toUpperCase()}</span>
-                        <span className="ml-2">{langMeta.flag}</span>
+                        <span className="ml-2">{countryMeta.flag}</span>
                     </span>
                 </div>
                 <LanguageSelector />
@@ -185,7 +186,7 @@ export default function StudyGuidePage() {
                                                                     style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)" }}
                                                                 >
                                                                     <div className="text-micro mb-2 flex items-center gap-2" style={{ color: "var(--accent)" }}>
-                                                                        <span>{langMeta.flag}</span>
+                                                                        <span>{countryMeta.flag}</span>
                                                                         AI EXPLANATION · {student.language.toUpperCase()}
                                                                     </div>
                                                                     <p className="text-[15px] leading-relaxed" style={{ color: "var(--fg-primary)" }}>

@@ -1,4 +1,12 @@
-// data/topics.ts
+export const TOPIC_NAMES: Record<string, string> = {
+    "use_of_force": "Use of Force",
+    "lawful_detention": "Lawful Detention",
+    "charter_rights": "Charter Rights",
+    "note_taking_reporting": "Note Taking & Reporting",
+    "patrol_procedures": "Patrol Procedures",
+    "emergency_response": "Emergency Response",
+};
+
 export const TOPICS = [
     {
         id: "use_of_force",

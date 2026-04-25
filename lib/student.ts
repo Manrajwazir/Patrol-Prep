@@ -4,7 +4,14 @@ import { Language, LANGUAGES } from "./language";
 export interface SessionResult {
     id: string;          // 4-char hex
     date: string;        // ISO timestamp
-    answers: { questionId: string; correct: boolean; topic: string }[];
+    answers: { 
+        questionId: string; 
+        correct: boolean; 
+        topic: string;
+        questionText?: string;
+        selectedAnswerText?: string;
+        correctAnswerText?: string;
+    }[];
     score: number;       // 0-10
     total: number;       // 10
 }
@@ -12,6 +19,7 @@ export interface SessionResult {
 export interface StudentProfile {
     name: string;
     language: Language;
+    country: string;
     createdAt: string;
     sessions: SessionResult[];
 }
@@ -21,7 +29,9 @@ export function getStudent(): StudentProfile | null {
     const data = localStorage.getItem("patrolprep-student");
     if (!data) return null;
     try {
-        return JSON.parse(data) as StudentProfile;
+        const parsed = JSON.parse(data) as StudentProfile;
+        if (!parsed.country) parsed.country = "Canada"; // backward compatibility
+        return parsed;
     } catch {
         return null;
     }
@@ -30,10 +40,12 @@ export function getStudent(): StudentProfile | null {
 export function saveStudent(profile: StudentProfile): void {
     if (typeof window === "undefined") return;
     localStorage.setItem("patrolprep-student", JSON.stringify(profile));
-    // Also sync the language selection so LanguageSelector picks it up
+    // Also sync the language/country selection so they are available globally
     localStorage.setItem("patrolprep-lang", profile.language);
-    // Dispatch event so hooks update
+    localStorage.setItem("patrolprep-country", profile.country);
+    // Dispatch events so hooks update
     window.dispatchEvent(new Event("language-change"));
+    window.dispatchEvent(new Event("country-change"));
 }
 
 export function isOnboarded(): boolean {

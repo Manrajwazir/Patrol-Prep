@@ -20,7 +20,14 @@ function formatElapsed(s: number) {
     return `${m}:${sec}`;
 }
 
-type AnswerRecord = { id: string; correct: boolean; topic: string };
+type AnswerRecord = { 
+    id: string; 
+    correct: boolean; 
+    topic: string;
+    questionText: string;
+    selectedAnswerText: string;
+    correctAnswerText: string;
+};
 
 export default function PracticePage() {
     const router = useRouter();
@@ -77,7 +84,15 @@ export default function PracticePage() {
     const handleAnswered = (selected: number, isCorrect: boolean) => {
         setStudentAnswer(selected);
         // Build the new record synchronously so nextQuestion always has the full array
-        const newAnswered = [...answered, { id: current!.id, correct: isCorrect, topic: current!.topic }];
+        const newRecord: AnswerRecord = { 
+            id: current!.id, 
+            correct: isCorrect, 
+            topic: current!.topic,
+            questionText: current!.question,
+            selectedAnswerText: current!.options[selected],
+            correctAnswerText: current!.options[current!.correctAnswer]
+        };
+        const newAnswered = [...answered, newRecord];
         setAnswered(newAnswered);
         if (isCorrect) {
             setTimeout(() => nextQuestion(newAnswered), 1400);
@@ -95,7 +110,14 @@ export default function PracticePage() {
             addSession({
                 id: sessionId,
                 date: new Date().toISOString(),
-                answers: results.map(r => ({ questionId: r.id, correct: r.correct, topic: r.topic })),
+                answers: results.map(r => ({ 
+                    questionId: r.id, 
+                    correct: r.correct, 
+                    topic: r.topic,
+                    questionText: r.questionText,
+                    selectedAnswerText: r.selectedAnswerText,
+                    correctAnswerText: r.correctAnswerText
+                })),
                 score: results.filter(r => r.correct).length,
                 total: TOTAL
             });

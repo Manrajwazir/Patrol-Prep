@@ -6,19 +6,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { getStudent, isOnboarded, StudentProfile, getWeakTopics } from "@/lib/student";
-import { LANGUAGES } from "@/lib/language";
+import { LANGUAGES, COUNTRIES } from "@/lib/language";
 import { LanguageSelector } from "@/components/language/LanguageSelector";
 import { VoiceModal } from "@/components/voice/VoiceModal";
 import { MicButton } from "@/components/voice/MicButton";
-
-const TOPIC_NAMES: Record<string, string> = {
-    "use_of_force": "Use of Force",
-    "lawful_detention": "Lawful Detention",
-    "charter_rights": "Charter Rights",
-    "note_taking_reporting": "Note Taking & Reporting",
-    "patrol_procedures": "Patrol Procedures",
-    "emergency_response": "Emergency Response",
-};
+import { TOPIC_NAMES } from "@/data/topics";
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -37,7 +29,7 @@ export default function DashboardPage() {
 
     if (!mounted || !student) return null;
 
-    const langMeta = LANGUAGES.find(l => l.code === student.language) || LANGUAGES[0];
+    const countryMeta = COUNTRIES.find(c => c.name === student.country) || COUNTRIES[0];
     const weakTopics = getWeakTopics();
     const totalQuestions = student.sessions.reduce((acc, s) => acc + s.answers.length, 0);
 
@@ -75,7 +67,7 @@ export default function DashboardPage() {
                     </span>
                     <span className="flex items-center">
                         <span style={{ color: "var(--fg-tertiary)" }}>{student.language.toUpperCase()}</span>
-                        <span className="ml-2">{langMeta.flag}</span>
+                        <span className="ml-2">{countryMeta.flag}</span>
                     </span>
                 </div>
                 <LanguageSelector />
@@ -204,13 +196,24 @@ export default function DashboardPage() {
                                     </thead>
                                     <tbody>
                                         {[...student.sessions].reverse().map((session, i) => (
-                                            <tr key={i} style={{ borderBottom: i < student.sessions.length - 1 ? "1px solid var(--border-subtle)" : "none" }}>
+                                            <tr 
+                                                key={session.id}
+                                                className="transition-colors hover:bg-white/5 group"
+                                                style={{ borderBottom: i < student.sessions.length - 1 ? "1px solid var(--border-subtle)" : "none" }}
+                                            >
                                                 <td className="px-4 py-3 font-mono text-xs" style={{ color: "var(--fg-secondary)" }}>{session.id}</td>
                                                 <td className="px-4 py-3 font-mono font-medium" style={{ color: (session.score / session.total) >= 0.7 ? "var(--correct)" : "var(--incorrect)" }}>
                                                     {session.score}/{session.total}
                                                 </td>
-                                                <td className="px-4 py-3 text-xs" style={{ color: "var(--fg-tertiary)" }}>
-                                                    {new Date(session.date).toLocaleDateString()} {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                <td className="px-4 py-3 text-xs flex justify-between items-center" style={{ color: "var(--fg-tertiary)" }}>
+                                                    <span>{new Date(session.date).toLocaleDateString()} {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                    <Link 
+                                                        href={`/history/${session.id}`}
+                                                        className="text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                                        style={{ background: "rgba(var(--accent-glow), 0.15)", color: "var(--accent)" }}
+                                                    >
+                                                        View Exam
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))}

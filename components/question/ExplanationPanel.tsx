@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
-import { getLanguage, LANGUAGES, type Language } from "@/lib/language";
+import { getLanguage, LANGUAGES, type Language, COUNTRIES, getCountry } from "@/lib/language";
 import { BRIDGES } from "@/data/concept-bridge";
 import type { Question } from "@/lib/questions";
 
@@ -43,7 +43,9 @@ export function ExplanationPanel({ question, studentAnswer, onDrill, onContinue 
     const startRef = useRef(Date.now());
 
     const lang        = getLanguage();
+    const countryName = getCountry();
     const cultural    = LANGUAGES.find(l => l.code === lang)?.cultural ?? "general";
+    const countryMeta = COUNTRIES.find(c => c.name === countryName);
     const concept     = KEY_CONCEPT[question.topic] ?? question.topic.replace(/_/g, " ");
     const cultureNote = CULTURAL[lang as Language] ?? CULTURAL.English;
 
@@ -208,7 +210,7 @@ export function ExplanationPanel({ question, studentAnswer, onDrill, onContinue 
                                             <p className="mt-1" style={{ color: "var(--fg-secondary)" }}>{concept}</p>
                                         </div>
                                         <div className="pt-2" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-                                            <span className="font-semibold" style={{ color: "var(--fg-primary)" }}>📍 {bridge.home}</span>
+                                            <span className="font-semibold" style={{ color: "var(--fg-primary)" }}>{countryMeta?.flag || "📍"} {countryName}</span>
                                             <p className="mt-1" style={{ color: "var(--fg-secondary)" }}>{bridge.comparison}</p>
                                         </div>
                                     </div>

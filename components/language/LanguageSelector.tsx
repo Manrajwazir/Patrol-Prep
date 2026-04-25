@@ -44,7 +44,6 @@ export function LanguageSelector() {
                     cursor: "pointer",
                 }}
             >
-                <span className="text-base">{currentLang.flag}</span>
                 <span style={{ color: "var(--fg-secondary)" }}>{currentLang.label}</span>
                 <svg
                     width="12"
@@ -92,7 +91,6 @@ export function LanguageSelector() {
                                         if (lang.code !== current) e.currentTarget.style.background = "transparent";
                                     }}
                                 >
-                                    <span className="text-base">{lang.flag}</span>
                                     <span>{lang.label}</span>
                                     {lang.code === current && (
                                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">

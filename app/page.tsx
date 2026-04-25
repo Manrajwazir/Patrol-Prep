@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { getStudent, saveStudent, isOnboarded, clearStudent, StudentProfile } from "@/lib/student";
-import { Language, LANGUAGES } from "@/lib/language";
+import { Language, LANGUAGES, COUNTRIES } from "@/lib/language";
 
 export default function Home() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function Home() {
   // Onboarding form state
   const [name, setName] = useState("");
   const [lang, setLang] = useState<Language>("English");
+  const [country, setCountry] = useState<string>("Canada");
 
   useEffect(() => {
     setStudent(getStudent());
@@ -26,6 +27,7 @@ export default function Home() {
     const profile: StudentProfile = {
       name: name.trim(),
       language: lang,
+      country: country,
       createdAt: new Date().toISOString(),
       sessions: []
     };
@@ -136,20 +138,40 @@ export default function Home() {
                   <button
                     key={l.code}
                     onClick={() => setLang(l.code)}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl transition-all"
+                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl transition-all"
                     style={{
                       background: lang === l.code ? "rgba(var(--accent-glow), 0.08)" : "var(--bg-surface)",
                       border: `1px solid ${lang === l.code ? "var(--accent)" : "var(--border-default)"}`,
                       cursor: "pointer",
                     }}
                   >
-                    <span className="text-2xl">{l.flag}</span>
                     <span className="text-sm font-medium" style={{ color: lang === l.code ? "var(--accent)" : "var(--fg-primary)" }}>
                       {l.label}
                     </span>
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Country Selection */}
+            <div>
+              <label className="block text-micro mb-2" style={{ color: "var(--fg-secondary)" }}>HOME COUNTRY (For Cultural Bridge)</label>
+              <select
+                value={country}
+                onChange={e => setCountry(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl text-base outline-none transition-all appearance-none cursor-pointer"
+                style={{
+                  background: "var(--bg-surface)",
+                  border: "1px solid var(--border-default)",
+                  color: "var(--fg-primary)",
+                }}
+              >
+                {COUNTRIES.map(c => (
+                  <option key={c.name} value={c.name}>
+                    {c.flag} {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Submit */}
