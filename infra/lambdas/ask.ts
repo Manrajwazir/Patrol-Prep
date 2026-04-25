@@ -1,8 +1,10 @@
 // infra/lambdas/ask.ts
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
+const s3 = new S3Client({ region: "us-west-2" });
 
 const HEADERS = {
     "Content-Type": "application/json",
@@ -14,41 +16,31 @@ question using ONLY the provided manual context. If the manual doesn't cover
 the question, say so honestly. Respond in the requested language.
 Keep response under 100 words. Plain prose, no markdown.`;
 
-// Static manual context covering the most exam-relevant topics.
-// This gives Bedrock grounding without needing full RAG for the hackathon.
-const MANUAL_CONTEXT = `
-Section 25 of the Criminal Code: Every one who is required or authorized by law to do anything 
-in the administration or enforcement of the law is, if he acts on reasonable grounds, justified 
-in doing what he is required or authorized to do and in using as much force as is necessary for 
-that purpose. Section 26: Every one who is authorized by law to use force is criminally 
-responsible for any excess thereof.
-
-Section 494 Criminal Code — Arrest without warrant: Any one may arrest without warrant a person 
-whom he finds committing an indictable offence. An indictable offence is a serious offence such 
-as break and enter or theft over $5,000. A summary conviction offence is a less serious offence. 
-After making a citizen's arrest, you must forthwith deliver the person to a peace officer.
-
-Charter of Rights: Section 8 — right to be secure against unreasonable search or seizure. 
-Section 9 — right not to be arbitrarily detained or imprisoned. Section 10 — on arrest or 
-detention, the right to be informed promptly of reasons and to retain and instruct counsel 
-without delay.
-
-As a security professional, you have no more or no fewer rights than any other citizen. Your 
-primary duty is to safeguard the people and property you have been assigned to protect. Wherever 
-possible, do not make an arrest yourself — call the police and be a good witness.
-
-Reasonable grounds: facts and information available in a given situation that would lead the 
-average person to conclude a criminal act has occurred.
-`.trim();
-
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const body = JSON.parse(event.body || "{}");
         const { question, language = "English" } = body;
 
+        const bucket = process.env.MANUAL_BUCKET;
+        const key = process.env.MANUAL_KEY;
+
+        if (!bucket || !key) {
+            throw new Error("MANUAL_BUCKET or MANUAL_KEY environment variable is not set.");
+        }
+
+        // Fetch manual from S3
+        console.log(`Fetching ${key} from bucket ${bucket}...`);
+        const s3Response = await s3.send(new GetObjectCommand({
+            Bucket: bucket,
+            Key: key
+        }));
+
+        const manualContext = await s3Response.Body?.transformToString() || "";
+        console.log(`Successfully loaded manual (${manualContext.length} chars)`);
+
         const userMessage = `
 Student question: ${question}
-Relevant manual section: ${MANUAL_CONTEXT}
+Relevant manual section: ${manualContext}
 Target language: ${language}
 `.trim();
 

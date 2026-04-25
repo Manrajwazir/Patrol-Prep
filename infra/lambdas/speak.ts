@@ -15,6 +15,8 @@ const HEADERS = {
 const VOICE_BY_LANG: Record<string, string> = {
     English: "Joanna",
     Spanish: "Lupe",
+    "Français": "Lea",
+    French: "Lea",
     Tagalog: "Joanna",
     Punjabi: "Joanna",
 };

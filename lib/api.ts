@@ -146,6 +146,12 @@ export const api = {
     },
 
     async speak(text: string, language: string) {
+        // Guard rails against Polly unsupported languages
+        const UNSUPPORTED = ["Tagalog", "Punjabi", "ਪੰਜਾਬੀ"];
+        if (UNSUPPORTED.includes(language)) {
+            return { audioBase64: null, unsupported: true };
+        }
+
         const res = await fetch(`${BASE}/speak`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

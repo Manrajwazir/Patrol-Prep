@@ -105,6 +105,8 @@ export class PatrolprepStack extends cdk.Stack {
       memorySize: 1024,
       environment: {
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
+        MANUAL_BUCKET: process.env.MANUAL_BUCKET_NAME || "REPLACE_ME_IN_AWS_CONSOLE",
+        MANUAL_KEY: process.env.MANUAL_FILE_KEY || "manual.txt"
       },
     });
 
@@ -157,6 +159,12 @@ export class PatrolprepStack extends cdk.Stack {
     explainLambda.addToRolePolicy(marketplacePolicy);
     drillLambda.addToRolePolicy(marketplacePolicy);
     askLambda.addToRolePolicy(marketplacePolicy);
+
+    // Ask Lambda needs S3 read access to fetch the manual
+    askLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: ["*"], // Allows reading from any bucket you provide
+    }));
 
     // Transcribe Lambda needs S3 read/write + Transcribe
     audioBucket.grantReadWrite(transcribeLambda);
