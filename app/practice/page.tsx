@@ -60,17 +60,20 @@ export default function PracticePage() {
 
     const handleAnswered = (selected: number, isCorrect: boolean) => {
         setStudentAnswer(selected);
-        setAnswered(prev => [...prev, { id: current!.id, correct: isCorrect, topic: current!.topic }]);
+        // Build the new record synchronously so nextQuestion always has the full array
+        const newAnswered = [...answered, { id: current!.id, correct: isCorrect, topic: current!.topic }];
+        setAnswered(newAnswered);
         if (isCorrect) {
-            setTimeout(() => nextQuestion(), 1400);
+            setTimeout(() => nextQuestion(newAnswered), 1400);
         } else {
             setTimeout(() => setShowExplanation(true), 800);
         }
     };
 
-    const nextQuestion = () => {
+    const nextQuestion = (latestAnswered?: AnswerRecord[]) => {
+        const results = latestAnswered ?? answered;
         if (questionNumber >= TOTAL) {
-            sessionStorage.setItem("patrolprep-results", JSON.stringify(answered));
+            sessionStorage.setItem("patrolprep-results", JSON.stringify(results));
             router.push("/results");
             return;
         }
@@ -184,7 +187,7 @@ export default function PracticePage() {
                         question={current}
                         studentAnswer={studentAnswer}
                         onDrill={handleStartDrill}
-                        onContinue={nextQuestion}
+                        onContinue={() => nextQuestion()}
                     />
                 )}
             </AnimatePresence>
@@ -194,7 +197,7 @@ export default function PracticePage() {
                 {showDrill && (
                     <DrillPanel
                         sourceQuestion={current}
-                        onComplete={handleDrillComplete}
+                        onComplete={() => handleDrillComplete()}
                     />
                 )}
             </AnimatePresence>

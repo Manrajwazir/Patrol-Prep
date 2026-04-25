@@ -36,6 +36,7 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
     const [errorMsg, setErrorMsg] = useState("");
     const recorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef   = useRef<Blob[]>([]);
+    const audioRef    = useRef<HTMLAudioElement | null>(null);
 
     const lang     = getLanguage();
     const langMeta = LANGUAGES.find(l => l.code === lang)!;
@@ -75,7 +76,11 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
             setStage("answer");
             try {
                 const sp = await api.speak(ask.answer, lang);
-                if (sp.audioBase64) new Audio(`data:audio/mpeg;base64,${sp.audioBase64}`).play().catch(() => {});
+                if (sp.audioBase64) {
+                    const audio = new Audio(`data:audio/mpeg;base64,${sp.audioBase64}`);
+                    audioRef.current = audio;
+                    audio.play().catch(() => {});
+                }
             } catch {}
         } catch (e: any) {
             setErrorMsg(e?.message ?? "Something went wrong.");
@@ -83,14 +88,24 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
         }
     };
 
-    const reset = () => { setStage("idle"); setTranscript(""); setAnswer(""); setErrorMsg(""); };
+    const stopAudio = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+            audioRef.current = null;
+        }
+    };
+
+    const reset = () => { stopAudio(); setStage("idle"); setTranscript(""); setAnswer(""); setErrorMsg(""); };
+
+    const handleClose = () => { stopAudio(); onClose(); };
 
     return (
         <motion.div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.65)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
         >
             <motion.div
                 initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
@@ -108,7 +123,7 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                         <span className="text-micro">{lang.toUpperCase()}</span>
                         <span>{langMeta.flag}</span>
                     </div>
-                    <button style={{ ...ghostBtn, padding: "4px 10px" }} onClick={onClose}>ESC</button>
+                    <button style={{ ...ghostBtn, padding: "4px 10px" }} onClick={handleClose}>ESC</button>
                 </div>
 
                 {/* Body */}
@@ -173,7 +188,7 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                                 </div>
                                 <div className="flex gap-2">
                                     <button style={ghostBtn} onClick={reset} onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }} className="flex-1">ASK AGAIN</button>
-                                    <button style={{ ...ghostBtn, borderColor: "var(--accent)", color: "var(--accent)" }} onClick={onClose} onMouseEnter={e => { e.currentTarget.style.background = "rgba(var(--accent-glow),.06)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }} className="flex-1">CLOSE</button>
+                                    <button style={{ ...ghostBtn, borderColor: "var(--accent)", color: "var(--accent)" }} onClick={handleClose} onMouseEnter={e => { e.currentTarget.style.background = "rgba(var(--accent-glow),.06)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }} className="flex-1">CLOSE</button>
                                 </div>
                             </motion.div>
                         )}
@@ -183,7 +198,7 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                                 <p className="text-sm text-center" style={{ color: "var(--incorrect)" }}>{errorMsg}</p>
                                 <div className="flex gap-2">
                                     <button style={ghostBtn} onClick={reset} onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>TRY AGAIN</button>
-                                    <button style={ghostBtn} onClick={onClose} onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>CLOSE</button>
+                                    <button style={ghostBtn} onClick={handleClose} onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>CLOSE</button>
                                 </div>
                             </motion.div>
                         )}
