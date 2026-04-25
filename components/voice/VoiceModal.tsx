@@ -30,19 +30,19 @@ const ghostBtn: React.CSSProperties = {
 };
 
 export function VoiceModal({ onClose }: { onClose: () => void }) {
-    const [stage, setStage]       = useState<Stage>("idle");
+    const [stage, setStage] = useState<Stage>("idle");
     const [transcript, setTranscript] = useState("");
-    const [answer, setAnswer]     = useState("");
+    const [answer, setAnswer] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const recorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef   = useRef<Blob[]>([]);
-    const audioRef    = useRef<HTMLAudioElement | null>(null);
+    const chunksRef = useRef<Blob[]>([]);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    const lang     = getLanguage();
+    const lang = getLanguage();
     const langMeta = LANGUAGES.find(l => l.code === lang)!;
     const countryName = getCountry();
     const countryMeta = COUNTRIES.find(c => c.name === countryName);
-    const noVoice  = lang === "Tagalog" || lang === "Punjabi";
+    const noVoice = lang === "Tagalog" || lang === "Punjabi";
 
     const start = async () => {
         try {
@@ -81,9 +81,9 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                 if (sp.audioBase64) {
                     const audio = new Audio(`data:audio/mpeg;base64,${sp.audioBase64}`);
                     audioRef.current = audio;
-                    audio.play().catch(() => {});
+                    audio.play().catch(() => { });
                 }
-            } catch {}
+            } catch { }
         } catch (e: any) {
             setErrorMsg(e?.message ?? "Something went wrong.");
             setStage("error");
@@ -150,9 +150,9 @@ export function VoiceModal({ onClose }: { onClose: () => void }) {
                                     <div className="absolute w-20 h-20 rounded-full animate-ping" style={{ background: "rgba(248,113,113,.18)" }} />
                                     <div className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "var(--incorrect)" }}>
                                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                                            <rect x="9" y="2" width="6" height="12" rx="3" fill="white"/>
-                                            <path d="M5 11a7 7 0 0 0 14 0" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                                            <line x1="12" y1="18" x2="12" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                                            <rect x="9" y="2" width="6" height="12" rx="3" fill="white" />
+                                            <path d="M5 11a7 7 0 0 0 14 0" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                                            <line x1="12" y1="18" x2="12" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>

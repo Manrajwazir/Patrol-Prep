@@ -35,19 +35,32 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             Key: key
         }));
 
-        const manualContext = await s3Response.Body?.transformToString() || "";
-        console.log(`Successfully loaded manual (${manualContext.length} chars)`);
+        const isPdf = key.toLowerCase().endsWith('.pdf');
+        const format = isPdf ? "pdf" : "txt";
 
-        const userMessage = `
-Student question: ${question}
-Relevant manual section: ${manualContext}
-Target language: ${language}
-`.trim();
+        const docBytes = await s3Response.Body?.transformToByteArray();
+        if (!docBytes) throw new Error("Failed to read document bytes from S3");
+
+        console.log(`Successfully loaded document (${docBytes.length} bytes)`);
 
         const response = await bedrock.send(new ConverseCommand({
             modelId: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
             system: [{ text: SYSTEM_PROMPT }],
-            messages: [{ role: "user", content: [{ text: userMessage }] }],
+            messages: [{ 
+                role: "user", 
+                content: [
+                    {
+                        document: {
+                            name: "manual",
+                            format: format as any,
+                            source: {
+                                bytes: docBytes
+                            }
+                        }
+                    },
+                    { text: `Student question: ${question}\nTarget language: ${language}` }
+                ] 
+            }],
             inferenceConfig: { maxTokens: 600, temperature: 0.3 },
         }));
 
