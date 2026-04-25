@@ -1,10 +1,6 @@
 // infra/lib/infra-stack.ts
-//
-// This file defines ALL the AWS resources patrolprep uses.
-// When you run `cdk deploy`, CDK reads this file, figures out what AWS resources
-// should exist, and creates/updates/deletes them until reality matches this code.
-//
-// Think of it as a shopping list that AWS auto-fulfills.
+// PatrolPrep AWS infrastructure.
+// Run `cdk deploy` from the infra/ folder to create/update all resources.
 
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
@@ -22,33 +18,13 @@ export class PatrolprepStack extends cdk.Stack {
 
     // ═══════════════════════════════════════════════════════════════
     // S3 BUCKETS
-    //
-    // Why three separate buckets? Different lifecycle/access needs:
-    //  - audio: large files, can be deleted after 30 days
-    //  - photos: medium files, kept for compliance
-    //  - reports: small PDFs, kept forever, eventually locked
-    //
-    // CDK auto-generates unique bucket names so you don't have to
-    // invent globally-unique strings yourself.
     // ═══════════════════════════════════════════════════════════════
 
     const audioBucket = new s3.Bucket(this, "AudioBucket", {
-      // removalPolicy.DESTROY = when you `cdk destroy`, the bucket gets deleted
-      // (safer for dev; in prod you'd want RETAIN)
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-
-      // autoDeleteObjects = when deleting the bucket, empty it first
-      // (required because S3 won't let you delete a non-empty bucket)
       autoDeleteObjects: true,
-
-      // Block all public access by default — audio files are sensitive
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-
-      // Encrypt files at rest using S3-managed keys (free, automatic)
       encryption: s3.BucketEncryption.S3_MANAGED,
-
-      // CORS config: allows our Next.js frontend to upload directly to S3
-      // using presigned URLs. The "*" origin will be tightened in prod.
       cors: [
         {
           allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET, s3.HttpMethods.HEAD],
@@ -82,132 +58,109 @@ export class PatrolprepStack extends cdk.Stack {
 
     // ═══════════════════════════════════════════════════════════════
     // DYNAMODB TABLE
-    //
-    // DynamoDB is AWS's NoSQL key-value database. Every item has a
-    // partition key (required) and optionally a sort key.
-    // It's serverless — no servers to manage, no connection pooling.
-    // You pay per read/write request (or provisioned capacity).
-    //
-    // Our incidents table has:
-    //  - partition key: incidentId (like "GL-2026-04-25-0847")
-    //  - a secondary index on "status" so supervisors can list
-    //    submitted-vs-draft incidents efficiently.
+    // Used for session tracking (P2 feature — not critical for demo)
     // ═══════════════════════════════════════════════════════════════
 
-    const incidentsTable = new dynamodb.Table(this, "IncidentsTable", {
+    const sessionsTable = new dynamodb.Table(this, "SessionsTable", {
       partitionKey: {
-        name: "incidentId",
+        name: "sessionId",
         type: dynamodb.AttributeType.STRING,
       },
-
-      // PAY_PER_REQUEST = only pay for what you use (ideal for hackathons)
-      // Alternative is PROVISIONED which reserves capacity
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-
-      // Stream: lets Lambda functions react to changes in real time.
-      // We'll use this on April 25 to push new incidents to the
-      // supervisor dashboard via WebSocket.
-      stream: dynamodb.StreamViewType.NEW_IMAGE,
-
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Secondary index: query all incidents by status ("submitted", "draft", etc.)
-    incidentsTable.addGlobalSecondaryIndex({
-      indexName: "status-timestamp-index",
-      partitionKey: { name: "status", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "timestamp", type: dynamodb.AttributeType.STRING },
     });
 
     // ═══════════════════════════════════════════════════════════════
     // LAMBDA FUNCTIONS
-    //
-    // Lambdas are serverless functions — code that runs only when
-    // triggered. No servers to manage. Pay only for execution time.
-    //
-    // We define FOUR empty Lambda shells here as scaffolding. Their
-    // actual logic gets written on April 25. They only exist in the
-    // template so the rest of the infrastructure (IAM roles, triggers,
-    // permissions) is wired up and ready to go.
-    //
-    // Each Lambda handler file is in infra/lambdas/ and bundled
-    // automatically by CDK's NodejsFunction construct.
     // ═══════════════════════════════════════════════════════════════
 
-    const processLambda = new lambdaNode.NodejsFunction(this, "ProcessLambda", {
-      entry: path.join(__dirname, "../lambdas/process.ts"),
+    // Core product Lambda — contextual explanation in user's language
+    const explainLambda = new lambdaNode.NodejsFunction(this, "ExplainLambda", {
+      entry: path.join(__dirname, "../lambdas/explain.ts"),
       runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.seconds(60),  // max execution time
-      memorySize: 1024,                    // MB; also scales CPU proportionally
-      environment: {
-        INCIDENTS_TABLE: incidentsTable.tableName,
-        AUDIO_BUCKET: audioBucket.bucketName,
-        PHOTO_BUCKET: photoBucket.bucketName,
-        REPORT_BUCKET: reportBucket.bucketName,
-        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",  // reuse HTTPS connections
-      },
-    });
-
-    const uploadLambda = new lambdaNode.NodejsFunction(this, "UploadLambda", {
-      entry: path.join(__dirname, "../lambdas/upload.ts"),
-      runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1024,
       environment: {
         AUDIO_BUCKET: audioBucket.bucketName,
-        PHOTO_BUCKET: photoBucket.bucketName,
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
       },
     });
 
-    const listLambda = new lambdaNode.NodejsFunction(this, "ListLambda", {
-      entry: path.join(__dirname, "../lambdas/list.ts"),
+    // Drill generator — 3 similar questions on the same concept
+    const drillLambda = new lambdaNode.NodejsFunction(this, "DrillLambda", {
+      entry: path.join(__dirname, "../lambdas/drill.ts"),
       runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1024,
       environment: {
-        INCIDENTS_TABLE: incidentsTable.tableName,
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
       },
     });
 
-    const getLambda = new lambdaNode.NodejsFunction(this, "GetLambda", {
-      entry: path.join(__dirname, "../lambdas/get.ts"),
+    // Free-form voice question answering
+    const askLambda = new lambdaNode.NodejsFunction(this, "AskLambda", {
+      entry: path.join(__dirname, "../lambdas/ask.ts"),
       runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1024,
       environment: {
-        INCIDENTS_TABLE: incidentsTable.tableName,
-        REPORT_BUCKET: reportBucket.bucketName,
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
+      },
+    });
+
+    // Speech to text
+    const transcribeLambda = new lambdaNode.NodejsFunction(this, "TranscribeLambda", {
+      entry: path.join(__dirname, "../lambdas/transcribe.ts"),
+      runtime: lambda.Runtime.NODEJS_20_X,
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 512,
+      environment: {
+        AUDIO_BUCKET: audioBucket.bucketName,
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
+      },
+    });
+
+    // Text to speech
+    const speakLambda = new lambdaNode.NodejsFunction(this, "SpeakLambda", {
+      entry: path.join(__dirname, "../lambdas/speak.ts"),
+      runtime: lambda.Runtime.NODEJS_20_X,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
       },
     });
 
     // ═══════════════════════════════════════════════════════════════
-    // IAM PERMISSIONS (CRITICAL — this is where most beginners trip)
-    //
-    // Lambdas run with an "execution role" that determines what AWS
-    // resources they can access. By default they can't do ANYTHING.
-    // We explicitly grant each Lambda only the permissions it needs.
-    //
-    // Pattern: resource.grantX(lambda) — CDK creates the IAM policy
-    // statement automatically. Way less error-prone than writing
-    // JSON policies by hand.
+    // IAM PERMISSIONS
     // ═══════════════════════════════════════════════════════════════
 
-    // Process Lambda needs to read audio/photos, write to DynamoDB,
-    // call Transcribe/Bedrock/Rekognition, and write the final PDF.
-    audioBucket.grantRead(processLambda);
-    photoBucket.grantRead(processLambda);
-    reportBucket.grantWrite(processLambda);
-    incidentsTable.grantReadWriteData(processLambda);
-
-    // Bedrock and Transcribe don't have resource-level permissions,
-    // so we add inline policies for them.
-    processLambda.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        "bedrock:InvokeModel",
-        "bedrock:Converse",
-      ],
-      // Bedrock requires the "*" resource for cross-region inference profiles
+    // Bedrock permissions for explain, drill, ask
+    const bedrockPolicy = new iam.PolicyStatement({
+      actions: ["bedrock:InvokeModel", "bedrock:Converse"],
       resources: ["*"],
-    }));
+    });
 
-    processLambda.addToRolePolicy(new iam.PolicyStatement({
+    explainLambda.addToRolePolicy(bedrockPolicy);
+    drillLambda.addToRolePolicy(bedrockPolicy);
+    askLambda.addToRolePolicy(bedrockPolicy);
+
+    const marketplacePolicy = new iam.PolicyStatement({
+      actions: [
+        "aws-marketplace:ViewSubscriptions",
+        "aws-marketplace:Subscribe",
+        "aws-marketplace:Unsubscribe",
+      ],
+      resources: ["*"],
+    });
+
+    explainLambda.addToRolePolicy(marketplacePolicy);
+    drillLambda.addToRolePolicy(marketplacePolicy);
+    askLambda.addToRolePolicy(marketplacePolicy);
+
+    // Transcribe Lambda needs S3 read/write + Transcribe
+    audioBucket.grantReadWrite(transcribeLambda);
+    transcribeLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: [
         "transcribe:StartTranscriptionJob",
         "transcribe:GetTranscriptionJob",
@@ -215,49 +168,20 @@ export class PatrolprepStack extends cdk.Stack {
       resources: ["*"],
     }));
 
-    processLambda.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        "rekognition:DetectLabels",
-        "rekognition:DetectText",
-      ],
+    // Polly permissions for speak Lambda
+    speakLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["polly:SynthesizeSpeech"],
       resources: ["*"],
     }));
 
-    // Upload Lambda only needs to generate presigned URLs (no actual upload)
-    audioBucket.grantPut(uploadLambda);
-    photoBucket.grantPut(uploadLambda);
-
-    // List Lambda: read-only on incidents table
-    incidentsTable.grantReadData(listLambda);
-
-    // Get Lambda: read incidents, read PDF reports
-    incidentsTable.grantReadData(getLambda);
-    reportBucket.grantRead(getLambda);
+    // Sessions table access
+    sessionsTable.grantReadWriteData(explainLambda);
 
     // ═══════════════════════════════════════════════════════════════
-    // S3 EVENT TRIGGER
-    //
-    // When a new audio file lands in the audio bucket, automatically
-    // fire the process Lambda. This is the "reactive" part of the
-    // architecture — no polling, no cron jobs. Just "on upload, run."
+    // API GATEWAY
     // ═══════════════════════════════════════════════════════════════
 
-    audioBucket.addEventNotification(
-      s3.EventType.OBJECT_CREATED,
-      new cdk.aws_s3_notifications.LambdaDestination(processLambda),
-      { prefix: "incoming/" }  // only files under /incoming/ trigger it
-    );
-
-    // ═══════════════════════════════════════════════════════════════
-    // API GATEWAY — HTTP endpoints for the frontend
-    //
-    // The frontend (Next.js) talks to these routes to upload files,
-    // list incidents, get incident details. Each route maps to a Lambda.
-    //
-    // CORS is set to "*" for hackathon dev. Tighten for production.
-    // ═══════════════════════════════════════════════════════════════
-
-    const api = new apigateway.RestApi(this, "patrolprepApi", {
+    const api = new apigateway.RestApi(this, "PatrolprepApi", {
       restApiName: "patrolprep-api",
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
@@ -266,23 +190,28 @@ export class PatrolprepStack extends cdk.Stack {
       },
     });
 
-    // POST /upload — returns a presigned S3 URL to the frontend
-    const uploadResource = api.root.addResource("upload");
-    uploadResource.addMethod("POST", new apigateway.LambdaIntegration(uploadLambda));
+    // POST /explain — wrong answer → contextual explanation
+    const explainResource = api.root.addResource("explain");
+    explainResource.addMethod("POST", new apigateway.LambdaIntegration(explainLambda));
 
-    // GET /incidents — list all incidents
-    const incidentsResource = api.root.addResource("incidents");
-    incidentsResource.addMethod("GET", new apigateway.LambdaIntegration(listLambda));
+    // POST /drill — generate 3 similar questions
+    const drillResource = api.root.addResource("drill");
+    drillResource.addMethod("POST", new apigateway.LambdaIntegration(drillLambda));
 
-    // GET /incidents/{id} — fetch one
-    const incidentResource = incidentsResource.addResource("{id}");
-    incidentResource.addMethod("GET", new apigateway.LambdaIntegration(getLambda));
+    // POST /ask — free-form voice question
+    const askResource = api.root.addResource("ask");
+    askResource.addMethod("POST", new apigateway.LambdaIntegration(askLambda));
+
+    // POST /transcribe — audio to text
+    const transcribeResource = api.root.addResource("transcribe");
+    transcribeResource.addMethod("POST", new apigateway.LambdaIntegration(transcribeLambda));
+
+    // POST /speak — text to audio
+    const speakResource = api.root.addResource("speak");
+    speakResource.addMethod("POST", new apigateway.LambdaIntegration(speakLambda));
 
     // ═══════════════════════════════════════════════════════════════
-    // CLOUDFORMATION OUTPUTS
-    //
-    // After `cdk deploy` finishes, these values get printed so you
-    // can copy them into your frontend's .env file.
+    // OUTPUTS
     // ═══════════════════════════════════════════════════════════════
 
     new cdk.CfnOutput(this, "ApiUrl", {
@@ -292,12 +221,7 @@ export class PatrolprepStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "AudioBucketName", {
       value: audioBucket.bucketName,
-      description: "S3 bucket for audio uploads",
-    });
-
-    new cdk.CfnOutput(this, "IncidentsTableName", {
-      value: incidentsTable.tableName,
-      description: "DynamoDB table for incidents",
+      description: "S3 bucket for audio/manual storage",
     });
 
     new cdk.CfnOutput(this, "Region", {
