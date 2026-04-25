@@ -59,7 +59,6 @@ const DEMO_DRILL = {
     ],
 };
 
-// Pre-baked ask response for demo
 const DEMO_ASK: Record<string, string> = {
     English:
         "An indictable offence is the most serious category of crime in Canada — similar to a felony in the US — and includes offences like murder, robbery, and assault causing bodily harm. A summary conviction offence is less serious and is handled more quickly in court, with lower maximum penalties. For security guards, the distinction matters because the rules around citizen's arrest differ depending on the severity of the offence.",
@@ -69,6 +68,13 @@ const DEMO_ASK: Record<string, string> = {
         "Ang indictable offence ay ang pinaka-seryosong kategorya ng krimen sa Canada — katulad ng felony. Ang summary offence ay mas magaan at niresolba nang mas mabilis sa korte. Para sa mga security guard, mahalaga ang pagkakaiba na ito dahil nag-iiba ang mga panuntunan sa citizen's arrest depende sa seryosidad ng krimen.",
     Punjabi:
         "Indictable offence ਕੈਨੇਡਾ ਵਿੱਚ ਸਭ ਤੋਂ ਗੰਭੀਰ ਅਪਰਾਧਾਂ ਦੀ ਸ਼੍ਰੇਣੀ ਹੈ। Summary offence ਘੱਟ ਗੰਭੀਰ ਹੈ। ਸੁਰੱਖਿਆ ਗਾਰਡਾਂ ਲਈ, ਇਹ ਫ਼ਰਕ ਜ਼ਰੂਰੀ ਹੈ ਕਿਉਂਕਿ citizen's arrest ਦੇ ਨਿਯਮ ਅਪਰਾਧ ਦੀ ਗੰਭੀਰਤਾ 'ਤੇ ਨਿਰਭਰ ਕਰਦੇ ਹਨ।",
+};
+
+const DEMO_EXPLAIN_CONCEPT: Record<string, string> = {
+    English: "In Canadian law, this means you can only use force if you have a valid reason and use the minimum amount needed. Compared to many home countries, Canadian law is much stricter—you cannot use force just to protect property, only to protect people.",
+    Spanish: "En la ley canadiense, esto significa que solo puede usar la fuerza si tiene una razón válida y usa la cantidad mínima necesaria. En comparación con muchos países de origen, la ley canadiense es mucho más estricta: no se puede usar la fuerza solo para proteger la propiedad, solo para proteger a las personas.",
+    Tagalog: "Sa batas ng Canada, ibig sabihin nito maaari ka lamang gumamit ng puwersa kung mayroon kang sapat na dahilan at gagamitin mo ang pinakamaliit na lakas na kinakailangan. Kumpara sa Pilipinas, mas mahigpit ang Canada—hindi ka maaaring gumamit ng puwersa para protektahan ang ari-arian lamang.",
+    Punjabi: "ਕੈਨੇਡੀਅਨ ਕਾਨੂੰਨ ਵਿੱਚ, ਇਸ ਦਾ ਮਤਲਬ ਹੈ ਕਿ ਤੁਸੀਂ ਸਿਰਫ਼ ਉਦੋਂ ਹੀ ਤਾਕਤ ਵਰਤ ਸਕਦੇ ਹੋ ਜਦੋਂ ਤੁਹਾਡੇ ਕੋਲ ਜਾਇਜ਼ ਕਾਰਨ ਹੋਵੇ ਅਤੇ ਤੁਸੀਂ ਘੱਟੋ-ਘੱਟ ਤਾਕਤ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
 };
 
 export const api = {
@@ -115,6 +121,11 @@ export const api = {
         if (isDemoMode()) {
             await new Promise(r => setTimeout(r, 800));
             const lang = payload.language as keyof typeof DEMO_ASK;
+            
+            if (payload.question.includes("explain this Alberta security law concept")) {
+                return { answer: DEMO_EXPLAIN_CONCEPT[lang] ?? DEMO_EXPLAIN_CONCEPT.English, language: payload.language };
+            }
+            
             return { answer: DEMO_ASK[lang] ?? DEMO_ASK.English, language: payload.language };
         }
         const res = await fetch(`${BASE}/ask`, {

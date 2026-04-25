@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
 import { getLanguage, LANGUAGES, type Language } from "@/lib/language";
+import { BRIDGES } from "@/data/concept-bridge";
 import type { Question } from "@/lib/questions";
 
 const EASE = [0.2, 0.8, 0.2, 1] as const;
@@ -192,13 +193,28 @@ export function ExplanationPanel({ question, studentAnswer, onDrill, onContinue 
                             </div>
                         )}
 
-                        {/* COMPARISON */}
-                        <div>
-                            <div className="text-micro mb-1.5">COMPARISON</div>
-                            <p className="text-sm leading-snug" style={{ color: "var(--fg-secondary)" }}>
-                                {cultureNote}
-                            </p>
-                        </div>
+                        {/* CONCEPT BRIDGE */}
+                        {(() => {
+                            const bridge = BRIDGES[question.topic]?.[lang as Language];
+                            if (!bridge) return null;
+                            return (
+                                <div className="mt-2 p-3 rounded-xl" style={{ background: "rgba(0,0,0,0.15)", border: "1px solid var(--border-default)" }}>
+                                    <div className="text-micro mb-3 flex items-center gap-2" style={{ color: "var(--accent)" }}>
+                                        <span>🌉</span> CONCEPT BRIDGE
+                                    </div>
+                                    <div className="space-y-3 text-sm">
+                                        <div>
+                                            <span className="font-semibold" style={{ color: "var(--fg-primary)" }}>🇨🇦 Canadian Law</span>
+                                            <p className="mt-1" style={{ color: "var(--fg-secondary)" }}>{concept}</p>
+                                        </div>
+                                        <div className="pt-2" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                                            <span className="font-semibold" style={{ color: "var(--fg-primary)" }}>📍 {bridge.home}</span>
+                                            <p className="mt-1" style={{ color: "var(--fg-secondary)" }}>{bridge.comparison}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

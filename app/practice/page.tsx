@@ -2,14 +2,14 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "@/components/question/QuestionCard";
 import { ExplanationPanel } from "@/components/question/ExplanationPanel";
 import { DrillPanel } from "@/components/question/DrillPanel";
 import { LanguageSelector } from "@/components/language/LanguageSelector";
 import { MicButton } from "@/components/voice/MicButton";
-import { addSession, isOnboarded } from "@/lib/student";
-import { getRandomQuestion, type Question } from "@/lib/questions";
+import { addSession, isOnboarded, getWeakTopics } from "@/lib/student";
+import { getAdaptiveQuestion, type Question } from "@/lib/questions";
 import { getLanguage } from "@/lib/language";
 
 const TOTAL = 10;
@@ -41,11 +41,15 @@ export default function PracticePage() {
     const [showDrill, setShowDrill] = useState(false);
     const [answered, setAnswered] = useState<AnswerRecord[]>([]);
     const [seen, setSeen] = useState<string[]>([]);
+    const [weakTopicIds, setWeakTopicIds] = useState<string[]>([]);
 
     // Route guard
     useEffect(() => {
         if (!isOnboarded()) {
             router.replace("/");
+        } else {
+            const weak = getWeakTopics();
+            setWeakTopicIds(weak.filter(w => w.accuracy < 0.6).map(w => w.topic));
         }
     }, [router]);
 
@@ -58,13 +62,17 @@ export default function PracticePage() {
     // Language sync
     useEffect(() => {
         setLang(getLanguage());
-        const onLangChange = () => setLang(getLanguage());
-        window.addEventListener("language-change", onLangChange);
-        return () => window.removeEventListener("language-change", onLangChange);
+        const handleLang = () => setLang(getLanguage());
+        window.addEventListener("language-change", handleLang);
+        return () => window.removeEventListener("language-change", handleLang);
     }, []);
 
-    // First question
-    useEffect(() => { setCurrent(getRandomQuestion()); }, []);
+    // Init first question
+    useEffect(() => {
+        if (!current) {
+            setCurrent(getAdaptiveQuestion([], weakTopicIds));
+        }
+    }, [current, weakTopicIds]);
 
     const handleAnswered = (selected: number, isCorrect: boolean) => {
         setStudentAnswer(selected);
@@ -99,7 +107,7 @@ export default function PracticePage() {
         setShowDrill(false);
         setStudentAnswer(null);
         setSeen(prev => [...prev, current!.id]);
-        setCurrent(getRandomQuestion([...seen, current!.id]));
+        setCurrent(getAdaptiveQuestion([...seen, current!.id], weakTopicIds));
         setQuestionNumber(prev => prev + 1);
     };
 
@@ -189,13 +197,32 @@ export default function PracticePage() {
             </div>
 
             {/* ── Question ── */}
-            <div key={current.id}>
-                <QuestionCard
-                    question={current}
-                    questionNumber={questionNumber}
-                    totalQuestions={TOTAL}
-                    onAnswered={handleAnswered}
-                />
+            <div className="flex-1 flex flex-col relative w-full pt-6">
+                <AnimatePresence mode="wait">
+                    {!showExplanation && !showDrill && (
+                        <motion.div
+                            key={`q-${current.id}`}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="flex-1 overflow-y-auto"
+                        >
+                            {weakTopicIds.includes(current.topic) && (
+                                <div className="text-center mb-2">
+                                    <span className="text-micro px-2 py-0.5 rounded" style={{ background: "rgba(var(--accent-glow), 0.15)", color: "var(--accent)", border: "1px solid rgba(var(--accent-glow), 0.3)" }}>
+                                        ⚡ TARGETING WEAK AREA
+                                    </span>
+                                </div>
+                            )}
+                            <QuestionCard
+                                question={current}
+                                questionNumber={questionNumber}
+                                totalQuestions={TOTAL}
+                                onAnswered={handleAnswered}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* ── Explanation panel ── */}

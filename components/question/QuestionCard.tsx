@@ -34,21 +34,36 @@ export function QuestionCard({ question, questionNumber, totalQuestions, onAnswe
     const [submitted, setSubmitted] = useState(false);
     const [wasWrong, setWasWrong]   = useState(false);
 
+    // Shuffle options once on mount
+    const [{ options, originalCorrect, mapToOriginal }] = useState(() => {
+        const mapped = question.options.map((text, i) => ({ text, originalIndex: i }));
+        for (let i = mapped.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [mapped[i], mapped[j]] = [mapped[j], mapped[i]];
+        }
+        const correctIdx = mapped.findIndex(o => o.originalIndex === question.correctAnswer);
+        return { 
+            options: mapped, 
+            originalCorrect: correctIdx, 
+            mapToOriginal: (shuffledIdx: number) => mapped[shuffledIdx].originalIndex 
+        };
+    });
+
     const topic         = TOPIC[question.topic] ?? { color: "var(--accent)", label: question.topic, ref: "" };
     const { sec, page } = parseRef(question.manualReference ?? "");
 
     const handleSubmit = () => {
         if (selected === null) return;
-        const correct = selected === question.correctAnswer;
+        const correct = selected === originalCorrect;
         setSubmitted(true);
         if (!correct) setWasWrong(true);
-        onAnswered(selected, correct);
+        onAnswered(mapToOriginal(selected), correct);
     };
 
     const optionState = (i: number): "default" | "correct" | "incorrect" => {
         if (!submitted) return "default";
-        if (i === question.correctAnswer) return "correct";
-        if (i === selected)               return "incorrect";
+        if (i === originalCorrect) return "correct";
+        if (i === selected)        return "incorrect";
         return "default";
     };
 
@@ -149,12 +164,12 @@ export function QuestionCard({ question, questionNumber, totalQuestions, onAnswe
                                 background: "var(--bg-surface)",
                             }}
                         >
-                            {question.options.map((opt, i) => (
+                            {options.map((opt, i) => (
                                 <AnswerOption
                                     key={i}
                                     index={i}
                                     letter={["A", "B", "C", "D"][i] as "A" | "B" | "C" | "D"}
-                                    text={opt}
+                                    text={opt.text}
                                     selected={selected === i}
                                     onSelect={() => !submitted && setSelected(i)}
                                     state={optionState(i)}
@@ -187,7 +202,7 @@ export function QuestionCard({ question, questionNumber, totalQuestions, onAnswe
                     )}
 
                     {/* Correct flash */}
-                    {submitted && selected === question.correctAnswer && (
+                    {submitted && selected === originalCorrect && (
                         <motion.div
                             initial={{ opacity: 0, y: 4 }}
                             animate={{ opacity: 1, y: 0 }}
