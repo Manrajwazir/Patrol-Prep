@@ -27,9 +27,9 @@
 **Infrastructure & Architecture:**
 - AWS workshop account credentials configured.
 - CDK stack `PatrolprepStack` deployed to **us-west-2**.
-- Frontend: Next.js 15, Tailwind CSS, Framer Motion, fully localized UI.
+- Frontend: Next.js 16, Tailwind CSS, Framer Motion, fully localized UI.
 - Local Storage State Engine: Manages adaptive learning history, decoupled language and country selections.
-- Real Bedrock Integration (Claude 3.5 Sonnet) powered by robust system prompting.
+- **Native Intelligent Document Processing (IDP):** The Voice Q&A feature fetches the raw `manual/manual.pdf` from S3 and passes it directly to Claude 3.5 Sonnet's vision/parsing engine via the Bedrock `Converse` API. No fragile text-chunking or vector DBs needed.
 - Seamless `?demo=1` mode to guarantee zero-latency responses during live pitch environments.
 
 **Features Live:**
@@ -38,9 +38,8 @@
 - **Practice Exam:** 10-question adaptive exams. The Fisher-Yates shuffle randomizes options to prevent pattern-guessing, and the engine adaptively weights questions towards the user's weakest topics.
 - **Concept Bridge:** On a wrong answer, the UI slides up and explicitly bridges the Canadian legal concept to the student's selected Home Country.
 - **Drill Mode:** Instantly generates 3 rapid-fire questions to reinforce a missed concept.
-- **Exam Review:** Deep dive into past sessions showing exact chosen answers vs correct answers.
-- **AI Study Guide:** Review core manual concepts and trigger "Explain in [Language] ✨" which prompts Bedrock to compare Canadian law to the user's home country.
-- **Voice Q&A:** A floating mic that simulates an end-to-end voice transcription query using Transcribe and Bedrock.
+- **Exam Review:** Deep dive into past sessions showing exact chosen answers vs correct answers (`/history/[id]`).
+- **Voice Q&A:** A floating mic simulating end-to-end voice transcription. Uses Amazon Transcribe (STT), Bedrock IDP (PDF parsing), and Amazon Polly (TTS). Includes strict guard rails: native French voices (`Lea`) and blocks TTS for unsupported languages (Tagalog/Punjabi) to avoid butchered audio.
 
 ---
 
@@ -128,26 +127,26 @@ Floating mic button on every question screen:
 
 ### 4.1 High-level diagram
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                  STUDENT APP (Next.js PWA)                    │
 │         Mobile-first, runs on phone or laptop                 │
-│  - Adaptive Question Engine                                   │
+│  - Adaptive Question Engine & Exam History                    │
 │  - Decoupled Country/Language state                           │
-│  - Concept Bridge UI                                          │
+│  - Concept Bridge UI & Voice Q&A                              │
 └───────────────┬──────────────────────────────────────────────┘
                 │ HTTPS / fetch
                 ▼
 ┌──────────────────────────────────────────────────────────────┐
 │         AMAZON API GATEWAY (REST, us-west-2)                  │
-│  POST /ask              (Bedrock Prompts w/ user context)     │
+│  POST /ask, /transcribe, /speak, /explain, /drill             │
 └───────────────┬──────────────────────────────────────────────┘
                 │
     ┌───────────┼─────────────┬─────────────┬────────────┐
     ▼           ▼             ▼             ▼            ▼
 ┌─────────┐ ┌─────────┐ ┌─────────────┐ ┌─────────┐ ┌───────────┐
-│ Lambdas │ │ DynamoDB│ │   Bedrock    │ │  Polly  │ │Transcribe │
-│         │ │         │ │(Sonnet 3.5) │ │  (TTS)  │ │  (STT)    │
+│ Lambdas │ │S3 Bucket│ │   Bedrock    │ │  Polly  │ │Transcribe │
+│         │ │(PDF IDP)│ │(Sonnet 3.5) │ │  (TTS)  │ │  (STT)    │
 └─────────┘ └─────────┘ └─────────────┘ └─────────┘ └───────────┘
 ```
 
@@ -162,11 +161,11 @@ By injecting the exact country selection into the LLM prompt, we force the AI to
 
 | Service | Purpose | Pitch reason |
 |---|---|---|
-| **Bedrock (Claude Sonnet 3.5)** | Generates contextual explanations + drill questions in any language | The brain |
+| **Bedrock (Claude 3.5 Sonnet)** | Generates contextual explanations + runs **Native IDP** on the raw PDF manual | The brain |
+| **Amazon S3** | Stores `manual/manual.pdf` | Feeds the IDP system |
 | **Amazon Transcribe** | Speech-to-text for voice input | Multi-lingual mic |
 | **Amazon Polly** | Text-to-speech for explanations in user's language | Voice answers, accessibility |
 | **Lambda + API Gateway** | Serverless backend | Scalable, AWS-native |
-| **Amplify Hosting** | Hosts the Next.js frontend | Same AWS account, single deploy |
 
 ---
 
@@ -282,11 +281,10 @@ patrolprep/
 
 | Question | Answer |
 |---|---|
-| *How is this different from ChatGPT with the PDF?* | ChatGPT is reactive — you ask it questions. We're a structured exam prep tool with adaptive drill generation. Plus our explanations are culturally contextualized, not just translated. |
-| *Where do your questions come from?* | Extracted from the official Alberta Basic Security Training Manual. In production we'd partner with training schools to source the actual exam blueprint. |
-| *How accurate are the explanations?* | We constrain the LLM to the manual context for every response. Hallucination risk is low, and we always show the manual reference. |
-| *What about data privacy?* | Audio recordings deleted after transcription. No user accounts means no PII to leak. |
-| *What's the business model?* | B2B with private security training schools — they pay per student. Or a $5/month consumer SKU. |
+| *How is this different from ChatGPT with the PDF?* | ChatGPT is reactive. We're a structured exam prep tool with adaptive drill generation. Plus our explanations are culturally contextualized, not just translated. |
+| *How does your RAG system work?* | **We don't use RAG!** We use native AWS **Intelligent Document Processing (IDP)**. Our Lambda fetches the raw PDF from S3 and passes it directly to Claude 3.5 Sonnet's vision engine via Bedrock, ensuring perfect formatting retention without fragile text chunking. |
+| *Where do your questions come from?* | Extracted from the official Alberta Basic Security Training Manual. |
+| *How accurate are the explanations?* | By using IDP, we constrain the LLM to the exact PDF manual for every response. Hallucination risk is practically zero. |
 
 ### 7.3 The Killer Statement (Memorize this)
 
