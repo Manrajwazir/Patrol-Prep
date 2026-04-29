@@ -7,6 +7,8 @@
 [![Bedrock](https://img.shields.io/badge/Amazon_Bedrock-Claude_3.5-blue)](https://aws.amazon.com/bedrock/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+# Live Link - https://main.dbd58ta7792dk.amplifyapp.com/
+
 ---
 
 ## The Problem
@@ -67,17 +69,17 @@ Bedrock  S3    Transcribe  Polly
 
 ### AWS Services
 
-| Service | Purpose |
-|---|---|
-| **Amazon Bedrock** (Claude 3.5 Sonnet) | AI explanations, drill generation, Voice Q&A answers |
-| **Amazon Bedrock IDP** | Native PDF parsing — raw manual passed as document block |
-| **Amazon Transcribe** | Speech-to-text for Voice Q&A |
-| **Amazon Polly** | Text-to-speech (Lea for French, Lupe for Spanish, Joanna for English) |
-| **Amazon S3** | Stores audio recordings and `manual/manual.pdf` |
-| **AWS Lambda** | 5 serverless functions — explain, drill, ask, transcribe, speak |
-| **Amazon API Gateway** | REST API routing to Lambdas |
-| **AWS Amplify** | Frontend hosting with CI/CD |
-| **AWS CDK** | Infrastructure as code |
+| Service                                | Purpose                                                               |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| **Amazon Bedrock** (Claude 3.5 Sonnet) | AI explanations, drill generation, Voice Q&A answers                  |
+| **Amazon Bedrock IDP**                 | Native PDF parsing — raw manual passed as document block              |
+| **Amazon Transcribe**                  | Speech-to-text for Voice Q&A                                          |
+| **Amazon Polly**                       | Text-to-speech (Lea for French, Lupe for Spanish, Joanna for English) |
+| **Amazon S3**                          | Stores audio recordings and `manual/manual.pdf`                       |
+| **AWS Lambda**                         | 5 serverless functions — explain, drill, ask, transcribe, speak       |
+| **Amazon API Gateway**                 | REST API routing to Lambdas                                           |
+| **AWS Amplify**                        | Frontend hosting with CI/CD                                           |
+| **AWS CDK**                            | Infrastructure as code                                                |
 
 ---
 
@@ -146,10 +148,10 @@ The Voice Q&A Lambda will use Bedrock IDP to read the PDF directly.
 
 After deploying, set these on the `AskLambda` function:
 
-| Variable | Value |
-|---|---|
+| Variable        | Value               |
+| --------------- | ------------------- |
 | `MANUAL_BUCKET` | Your S3 bucket name |
-| `MANUAL_KEY` | `manual/manual.pdf` |
+| `MANUAL_KEY`    | `manual/manual.pdf` |
 
 ---
 
