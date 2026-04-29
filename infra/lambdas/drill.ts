@@ -2,7 +2,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 
-const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
+const bedrock = new BedrockRuntimeClient({ region: "ca-central-1" });
 
 const HEADERS = {
     "Content-Type": "application/json",

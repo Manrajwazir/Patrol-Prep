@@ -9,8 +9,8 @@ interface TranscribeResult {
     };
 }
 
-const transcribe = new TranscribeClient({ region: "us-west-2" });
-const s3 = new S3Client({ region: "us-west-2" });
+const transcribe = new TranscribeClient({ region: "ca-central-1" });
+const s3 = new S3Client({ region: "ca-central-1" });
 
 const HEADERS = {
     "Content-Type": "application/json",

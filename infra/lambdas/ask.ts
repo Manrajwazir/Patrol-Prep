@@ -3,8 +3,8 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
-const s3 = new S3Client({ region: "us-west-2" });
+const bedrock = new BedrockRuntimeClient({ region: "ca-central-1" });
+const s3 = new S3Client({ region: "ca-central-1" });
 
 const HEADERS = {
     "Content-Type": "application/json",
@@ -46,8 +46,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         const response = await bedrock.send(new ConverseCommand({
             modelId: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
             system: [{ text: SYSTEM_PROMPT }],
-            messages: [{ 
-                role: "user", 
+            messages: [{
+                role: "user",
                 content: [
                     {
                         document: {
@@ -59,7 +59,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                         }
                     },
                     { text: `Student question: ${question}\nTarget language: ${language}` }
-                ] 
+                ]
             }],
             inferenceConfig: { maxTokens: 600, temperature: 0.3 },
         }));

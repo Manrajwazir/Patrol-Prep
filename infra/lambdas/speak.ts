@@ -2,7 +2,7 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
 
-const polly = new PollyClient({ region: "us-west-2" });
+const polly = new PollyClient({ region: "ca-central-1" });
 
 const HEADERS = {
     "Content-Type": "application/json",

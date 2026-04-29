@@ -11,6 +11,6 @@ const app = new cdk.App();
 new PatrolprepStack(app, "PatrolprepStack", {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: "us-west-2",
+    region: "ca-central-1",
   },
 });
